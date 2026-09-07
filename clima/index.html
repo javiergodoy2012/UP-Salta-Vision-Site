@@ -695,7 +695,7 @@ body.modal-open{overflow:hidden;}
   <div class="system-status" aria-label="Resumen operativo">
     <div class="status-metric status-normal"><div class="status-metric-label">Normal</div><div class="status-metric-value" id="summary-normal">0</div></div>
     <button class="status-metric status-metric-button status-alert" id="alerts-summary-button" type="button" onclick="openAlertsPanel()" aria-haspopup="dialog" aria-controls="alerts-modal" disabled>
-      <span class="status-metric-label">Alertas</span>
+      <span class="status-metric-label">Ramales con alerta · Bot 24/7</span>
       <span class="status-metric-value" id="summary-alert">0</span>
       <span class="status-metric-hint" id="alerts-summary-hint">Sin alertas activas</span>
     </button>
@@ -1473,6 +1473,7 @@ function updateOperationalSummary(){
     alertsButton.setAttribute('aria-label',alert>0?`Ver ${alert} ${alert===1?'sector con alerta':'sectores con alertas'}`:'Sin alertas activas');
   }
   if(alertsHint) alertsHint.textContent=alert>0?'Seleccionar para ver': 'Sin alertas activas';
+  syncBotDashboard();
   if(document.getElementById('alerts-modal')?.classList.contains('open')) renderActiveAlerts();
 }
 
@@ -3430,12 +3431,16 @@ function botTimestamp(value){
 }
 
 function setBotAccessMessage(message){
+  window.botDashboardAlerts=null;
+  syncBotDashboard();
   const list=document.getElementById('bot-alert-list');
   if(list)list.innerHTML=`<div class="bot-empty">${message}</div>`;
 }
 
 function renderBotAlerts(alerts){
   botAlertsCache=alerts;
+  window.botDashboardAlerts=alerts;
+  syncBotDashboard();
   const list=document.getElementById('bot-alert-list');
   const count=document.getElementById('bot-active-count');
   if(count)count.textContent=String(alerts.length);
@@ -3528,9 +3533,37 @@ async function connectBotCenter(user){
   }
 }
 
-function refreshBotCenter(){
+function syncBotDashboard(){
+  const alerts=window.botDashboardAlerts;
+  const ready=Array.isArray(alerts);
+  const button=document.getElementById('alerts-summary-button');
+  const count=document.getElementById('summary-alert');
+  const hint=document.getElementById('alerts-summary-hint');
+  if(count)count.textContent=ready?String(alerts.length):'—';
+  if(hint)hint.textContent=ready?(alerts.length?'Pronóstico del bot · ver detalle':'Sin alertas en el último control del bot'):'Estado del bot no disponible';
+  if(button){button.disabled=!ready;button.onclick=()=>showTab('bot');button.classList.toggle('has-alerts',ready&&alerts.length>0);button.setAttribute('aria-label','Ver alertas del Bot 24/7');}
+}
+
+let botRefreshInProgress=false;
+async function refreshBotCenter(){
+  if(botRefreshInProgress)return;
   const app=window.firebase&&firebase.apps.length?firebase.app():null;
-  if(app)connectBotCenter(app.auth().currentUser);
+  if(!app||!app.auth().currentUser||!climaPushAuthorized){toast('Ingresá con una cuenta aprobada.','err');return;}
+  botRefreshInProgress=true;
+  const button=document.querySelector('[onclick="refreshBotCenter()"]');
+  if(button){button.disabled=true;button.textContent='Consultando…';}
+  try{
+    const db=app.firestore();
+    const [alerts,state]=await Promise.all([
+      db.collection('alertasBot').where('active','==',true).get({source:'server'}),
+      db.collection('estadoBot').doc('monitor').get({source:'server'})
+    ]);
+    renderBotAlerts(alerts.docs.map(doc=>({id:doc.id,...doc.data()})));
+    const data=state.data()||{};
+    document.getElementById('bot-last-run').textContent=botTimestamp(data.lastRunAt||data.startedAt);
+    toast('Estado consultado al servidor. Último control: '+botTimestamp(data.lastRunAt||data.startedAt)+'. El bot ejecuta cada 30 minutos.','ok');
+  }catch(_){setBotAccessMessage('No se pudo actualizar desde el servidor. Reintentá cuando tengas conexión.');toast('No se pudo actualizar el estado del bot.','err');}
+  finally{botRefreshInProgress=false;if(button){button.disabled=false;button.textContent='🔄 Actualizar';}}
 }
 
 (function initPrivateBotCenter(){
