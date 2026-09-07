@@ -130,6 +130,9 @@
     grid-row: 1 !important;
     height: 46px !important;
     min-height: 46px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: flex-start !important;
   }
 
   .logo-box .logo-img {
