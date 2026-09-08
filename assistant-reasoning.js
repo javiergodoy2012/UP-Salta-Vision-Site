@@ -18,7 +18,8 @@ export async function analyze(module, question, local) {
     const payload = await response.json();
     const data = payload.result || payload.data;
     if (!response.ok || payload.error || data?.module !== module || typeof data.answer !== 'string' || !data.answer.trim()) throw new Error('AI_UNAVAILABLE');
-    return {text: data.answer, source: data.source, actions: local.actions};
+    if(module === 'site' && /[:;,\-–…]$/.test(data.answer.trim()))throw new Error('INCOMPLETE_RESPONSE');
+    return {text: data.answer, source: data.source, actions: local.actions, ...(module === 'site'?{sources:data.sources||[],searchSuggestions:data.searchSuggestions||null}:{})};
   } catch (_) {
     return {...local, source: (local.source || 'Consulta local') + ' · Respaldo local: análisis IA no disponible'};
   } finally { clearTimeout(timer); }
