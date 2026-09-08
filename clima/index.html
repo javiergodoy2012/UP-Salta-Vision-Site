@@ -1230,6 +1230,7 @@ function renderSectors(){
         </div>
       </div>
       <div class="card-body">
+        <div id="bot-forecast-${s.id}" role="status">Estado de alerta pronosticada pendiente del Bot.</div>
         <div class="weather-row" id="weather-${s.id}">
           ${['🌡️','🌧️','💨','💧'].map(icon=>`
             <div class="w-stat">
@@ -1634,7 +1635,7 @@ function updateCard(sector, cur){
   // Chips
   const chips = document.getElementById('chips-'+sector.id);
   if(alerts.length===0){
-    chips.innerHTML = '<span class="chip chip-ok">✓ Sin alertas</span>';
+    chips.innerHTML = '<span class="chip chip-ok">✓ Sin umbrales actuales superados</span>';
   } else {
     chips.innerHTML = alerts.map(a=>{
       const labels={hot:'🔥 Calor',cold:'🥶 Frío',rain:'🌧️ Lluvia',storm:'🌪️ Viento'};
@@ -1664,7 +1665,7 @@ function updateCard(sector, cur){
     <div class="w-stat">
       <span class="w-stat-icon">💨</span>
       <div class="w-stat-val" style="color:${wind>=t.wind?'var(--storm)':'var(--ink)'}">${wind.toFixed(0)} km/h</div>
-      <div class="w-stat-label">Viento</div>
+      <div class="w-stat-label">Viento actual</div>
     </div>
     <div class="w-stat">
       <span class="w-stat-icon">💧</span>
@@ -3453,7 +3454,7 @@ function renderBotAlerts(alerts){
   list.innerHTML=alerts.map((alert,index)=>`
     <article class="bot-alert ${Number(alert.severity)>=4?'critical':''}">
       <div class="bot-alert-top"><div><div class="bot-alert-ramal">Ramal ${alert.ramal||'—'}</div><div class="bot-copy">Actualizada ${botTimestamp(alert.updatedAt)}</div></div><span class="bot-alert-level">${alert.state||'Alerta'}</span></div>
-      <div class="bot-alert-text">Sectores: <b>${(alert.sectors||[]).join(', ')||'—'}</b>\nLluvia máx.: ${Number(alert.maxRain24||0).toFixed(1)} mm/24 h · ${Number(alert.maxRain48||0).toFixed(1)} mm/48 h · Ráfagas: ${Number(alert.maxGust||0).toFixed(0)} km/h</div>
+      <div class="bot-alert-text">Sectores: <b>${(alert.sectors||[]).join(', ')||'—'}</b>\nLluvia máx.: ${Number(alert.maxRain24||0).toFixed(1)} mm/24 h · ${Number(alert.maxRain48||0).toFixed(1)} mm/48 h · Ráfagas previstas de hasta ${Number(alert.maxGust||0).toFixed(0)} km/h</div>
       <button class="btn btn-primary btn-sm" type="button" onclick="shareBotAlert(${index})">📱 Copiar y abrir Comunidad</button>
     </article>`).join('');
 }
@@ -3533,7 +3534,32 @@ async function connectBotCenter(user){
   }
 }
 
+function renderBotForecastCards(){
+  const alerts=window.botDashboardAlerts;
+  for(const sector of SECTORS){
+    const target=document.getElementById('bot-forecast-'+sector.id);
+    if(!target)continue;
+    if(!Array.isArray(alerts)){
+      target.textContent='Estado de alerta pronosticada no disponible.';
+      continue;
+    }
+    const rows=[];
+    for(const alert of alerts){
+      const detail=alert.sectorAlerts?.find(item=>item.sectorId===sector.id);
+      if(detail){
+        const gust=Number(detail.maxGust);
+        const value=Number.isFinite(gust)?`${gust.toLocaleString('es-AR',{maximumFractionDigits:1})} ≈ ${gust.toFixed(0)} km/h`:'no disponible';
+        rows.push(`ALERTA PRONOSTICADA · ${detail.locality} · Ramal ${alert.ramal} · Ráfagas previstas de hasta ${value} · Umbral de ráfagas: ${detail.windThreshold} km/h · Período: ${detail.period} (${(detail.forecastDates||[]).join(' / ')}) · Eventos: ${(detail.events||[]).join(', ')} · Control: ${botTimestamp(alert.checkedAt||alert.updatedAt)}`);
+      }else if((alert.sectors||[]).includes(sector.name)){
+        rows.push(`ALERTA PRONOSTICADA · ${sector.name} · Ramal ${alert.ramal} · Detalle por localidad pendiente del próximo control del Bot.`);
+      }
+    }
+    target.textContent=rows.length?rows.join('\n'):'Sin alerta pronosticada para esta localidad en el último estado disponible del Bot. Condiciones actuales indicadas por separado.';
+  }
+}
+
 function syncBotDashboard(){
+  renderBotForecastCards();
   const alerts=window.botDashboardAlerts;
   const ready=Array.isArray(alerts);
   const button=document.getElementById('alerts-summary-button');
