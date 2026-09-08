@@ -1,0 +1,40 @@
+--- a/functions/index.js
++++ b/functions/index.js
+@@ -135,12 +135,12 @@
+   const max24 = number(daily.temperature_2m_max?.[0], NaN);
+   const min24 = number(daily.temperature_2m_min?.[0], NaN);
+   const impacts = [];
+-  if (threshold.enStorm !== false && gust48 >= threshold.wind) impacts.push({score:gust48 >= threshold.wind * 1.25 ? 4 : 3, type:"viento", text:`Ráfagas de ${gust48.toFixed(0)} km/h`});
++  if (threshold.enStorm !== false && gust48 >= threshold.wind) impacts.push({score:gust48 >= threshold.wind * 1.25 ? 4 : 3, type:"viento", text:`Ráfagas previstas de hasta ${gust48.toFixed(0)} km/h`});
+   if (threshold.enRain !== false && rain24 >= threshold.rain) impacts.push({score:rain24 >= threshold.rain * 1.5 ? 4 : 3, type:"lluvia", text:`Lluvia prevista ${rain24.toFixed(1)} mm/24 h`});
+   if (threshold.enHot !== false && Number.isFinite(max24) && max24 >= threshold.hot) impacts.push({score:max24 >= threshold.hot + 3 ? 4 : 3, type:"calor", text:`Temperatura máxima ${max24.toFixed(1)} °C`});
+   if (threshold.enCold !== false && Number.isFinite(min24) && min24 <= threshold.cold) impacts.push({score:min24 <= threshold.cold - 3 ? 4 : 3, type:"frio", text:`Temperatura mínima ${min24.toFixed(1)} °C`});
+   impacts.sort((a, b) => b.score - a.score);
+-  return {sector, rain24, rain48, gust48, probability, max24, min24, impacts, severity:impacts[0]?.score || 1};
++  return {sector, rain24, rain48, gust48, probability, max24, min24, impacts, windThreshold:threshold.wind, forecastDates:(daily.time || []).slice(0, 2), severity:impacts[0]?.score || 1};
+ }
+ 
+ function normalizeRamal(ramal) {
+@@ -157,11 +157,12 @@
+   const maxRain48 = Math.max(...evaluations.map(item => item.rain48));
+   const maxGust = Math.max(...evaluations.map(item => item.gust48));
+   const events = [...new Set(affected.flatMap(item => item.impacts.filter(i => i.score >= 3).map(i => i.type)))];
+-  const message = `⚠️ *CLIMA ALERT — RAMAL ${ramal}*\nNivel: *${state}*\nSectores: ${sectors.join(", ")}\nLluvia máx.: ${maxRain24.toFixed(1)} mm/24 h · ${maxRain48.toFixed(1)} mm/48 h\nRáfaga máx.: ${maxGust.toFixed(0)} km/h\nEventos: ${events.join(", ")}\nActualizado: ${localDateTime()} h\n_Verificar alertas oficiales del SMN._`;
++  const message = `⚠️ *CLIMA ALERT — RAMAL ${ramal}*\nNivel: *${state}*\nSectores: ${sectors.join(", ")}\nLluvia máx.: ${maxRain24.toFixed(1)} mm/24 h · ${maxRain48.toFixed(1)} mm/48 h\nRáfagas previstas de hasta ${maxGust.toFixed(0)} km/h\nEventos: ${events.join(", ")}\nActualizado: ${localDateTime()} h\n_Verificar alertas oficiales del SMN._`;
+   const signaturePayload = JSON.stringify({ramal, severity, sectors, events, rain:Math.round(maxRain24), gust:Math.round(maxGust), day:localDate()});
+   const pushPayload = JSON.stringify({ramal, severity, sectors, events, day:localDate()});
+   return {
+     ramal, severity, state, sectors, events, maxRain24, maxRain48, maxGust, message,
++    sectorAlerts:affected.map(item => ({sectorId:item.sector.id, locality:item.sector.name, maxGust:item.gust48, windThreshold:item.windThreshold, period:"hoy/mañana", forecastDates:item.forecastDates, events:item.impacts.map(impact => impact.type)})),
+     signature:crypto.createHash("sha256").update(signaturePayload).digest("hex").slice(0, 24),
+     pushSignature:crypto.createHash("sha256").update(pushPayload).digest("hex").slice(0, 24)
+   };
+@@ -244,7 +245,7 @@
+     const eventText = alert.events?.length ? alert.events.join(", ") : "evento meteorológico";
+     return {
+       title:`Clima Alert · Ramal ${alert.ramal}`,
+-      body:`${alert.state} en ${alert.sectors.join(", ")} · ${eventText} · Ráfagas ${alert.maxGust.toFixed(0)} km/h`
++      body:`${alert.state} en ${alert.sectors.join(", ")} · ${eventText} · Ráfagas previstas de hasta ${alert.maxGust.toFixed(0)} km/h`
+     };
+   }
+   return {
