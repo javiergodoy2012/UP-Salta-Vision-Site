@@ -922,6 +922,16 @@ body::after{
 <button class="tab" id="tabSeguridad" type="button">🛡 DISPOSITIVO DE SEGURIDAD</button>
 <button class="tab" id="tabClientes" type="button">👥 CLIENTES</button>
 </div>
+<details id="interferenciasControl" style="margin:12px 0;padding:10px;border:1px solid #334a60;border-radius:8px">
+<summary>INTERFERENCIAS / SERVICIOS</summary>
+<label style="display:block;margin:8px 0"><input id="interferenciasActiva" type="checkbox" style="width:auto"> Mostrar capa en el mapa</label>
+<label for="interferenciasFiltro">Registros</label>
+<select id="interferenciasFiltro"><option value="todos">Todos</option><option value="aereo">Aéreos</option><option value="subterraneo">Subterráneos</option><option value="hidraulico">Hidráulicos</option><option value="paralelos">Paralelos</option></select>
+<label style="display:block;margin:8px 0"><input id="interferenciasPermisos" type="checkbox" checked style="width:auto"> Solo permisos</label>
+<small>Registros de trámites. No acreditan obra ejecutada ni actualmente en servicio. Los filtros también se aplican a la búsqueda PK.</small>
+<p id="interferenciasCantidad" aria-live="polite"></p>
+<details id="interferenciasExcluidas"></details>
+</details>
 <div class="mode-summary" id="descarrilosResumen" hidden>
   <strong>Histórico de descarrilos</strong>
   <span id="descarrilosCantidad">0 hechos publicados</span>
@@ -987,6 +997,7 @@ body::after{
 </div>
 <div class="coord-full"><small>Coordenada (lat, lon)</small><div id="coord"></div></div>
 <div class="action-row"><button class="secondary" id="copy">Copiar coordenada</button><button class="secondary" id="center">Centrar mapa</button></div>
+<div id="interferenciasResultado" hidden aria-live="polite" style="margin-top:12px;padding:10px;border:1px solid #7c3aed;border-radius:8px;font-size:13px;line-height:1.5;overflow-wrap:anywhere"></div>
 <div id="cruceHabilitado" hidden aria-live="polite" style="margin-top:12px;padding:10px;border:1px solid #334a60;border-radius:8px;font-size:13px;line-height:1.5;overflow-wrap:anywhere"></div>
 <div id="detalle" style="margin-top:12px;color:#b8c5d5"></div>
 <a class="gmaps" id="gmap" rel="noopener" target="_blank">VER EN GOOGLE MAPS ↗</a>
@@ -1018,6 +1029,8 @@ body::after{
 
 <script src="cruces-habilitados-data.js"></script>
 <script src="cruces-habilitados.js"></script>
+<script src="interferencias-data.js"></script>
+<script src="interferencias.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 
@@ -1950,6 +1963,7 @@ async function buscar(){
   try{
   const m=meta(),k0=parseKm($('km').value);
   window.CrucesHabilitados?.mostrar(m.ramal,Number.isFinite(k0)&&k0>=m.km_inicio&&k0<=m.km_fin?k0:NaN);
+  window.Interferencias?.mostrar(m.ramal,Number.isFinite(k0)&&k0>=m.km_inicio&&k0<=m.km_fin?k0:NaN);
   const c14gap = m.ramal==='C14' ? c14Gap(k0) : null;
   if(c14gap){
     $('resultado').hidden=false;
@@ -2052,6 +2066,14 @@ initPersonal();
 initSeguridad();
 initClientes();
 init();
+window.Interferencias?.init({L,map,resolve(ramal,pk){
+  const m=CAT.ramales.find(r=>r.ramal===ramal),pts=NETWORK[ramal]?.puntos;
+  if(!m||!pts?.length||!Number.isFinite(pk)||pk<m.km_inicio||pk>m.km_fin||pk<pts[0][0]||pk>pts[pts.length-1][0])return null;
+  if((ramal==='C14'&&c14Gap(pk))||(ramal==='C'&&lineaCGap(pk)))return null;
+  const p=findPoint(pts,pk);
+  return p&&Number.isFinite(p[1])&&Number.isFinite(p[2])?[p[1],p[2]]:null;
+}});
+
 
 (function(){
   const BASE_W=1920,BASE_H=1080;
