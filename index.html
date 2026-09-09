@@ -987,6 +987,7 @@ body::after{
 </div>
 <div class="coord-full"><small>Coordenada (lat, lon)</small><div id="coord"></div></div>
 <div class="action-row"><button class="secondary" id="copy">Copiar coordenada</button><button class="secondary" id="center">Centrar mapa</button></div>
+<div id="cruceHabilitado" hidden aria-live="polite" style="margin-top:12px;padding:10px;border:1px solid #334a60;border-radius:8px;font-size:13px;line-height:1.5;overflow-wrap:anywhere"></div>
 <div id="detalle" style="margin-top:12px;color:#b8c5d5"></div>
 <a class="gmaps" id="gmap" rel="noopener" target="_blank">VER EN GOOGLE MAPS ↗</a>
 </section>
@@ -1015,6 +1016,8 @@ body::after{
 
 
 
+<script src="cruces-habilitados-data.js"></script>
+<script src="cruces-habilitados.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 
@@ -1946,6 +1949,7 @@ function c14Warning(pk){
 async function buscar(){
   try{
   const m=meta(),k0=parseKm($('km').value);
+  window.CrucesHabilitados?.mostrar(m.ramal,Number.isFinite(k0)&&k0>=m.km_inicio&&k0<=m.km_fin?k0:NaN);
   const c14gap = m.ramal==='C14' ? c14Gap(k0) : null;
   if(c14gap){
     $('resultado').hidden=false;
