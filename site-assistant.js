@@ -35,16 +35,117 @@ function clientAnswer(q){const clients=getData('CLIENTES')||[];const found=clien
 function legacyAnswer(question){const q=normalize(question),ramal=ramalFrom(q),pk=pkFrom(q);if(q.includes('descarr'))return derailmentAnswer(ramal,q);if(hasAny(q,CLIMATE_WORDS))return {text:'Esta consulta corresponde a Clima Alert. Abrí ese módulo para consultar condiciones, pronósticos o alertas meteorológicas.',source:'Ámbitos separados por módulo',actions:[{type:'link',label:'Abrir Clima Alert',href:'/clima/',primary:true}]};if(hasAny(q,MUTATION_WORDS))return {text:'El asistente funciona únicamente en modo consulta. No puede crear, modificar ni eliminar datos de Site Visión.',source:'Acceso de solo lectura'};if(!q||q==='hola'||q.includes('ayuda')||q.includes('que podes'))return helpAnswer();if((q.includes('ramales')||q.includes('red up salta'))&&!ramal)return networkAnswer();if(pk!=null&&!ramal)return {text:'Para ubicar ese PK indicame también el ramal, por ejemplo: “C15 km 1400,400”.',source:'Localizador de Site Visión'};if(pk!=null&&ramal)return pkAnswer(ramal,pk);if(q.includes('personal')||q.includes('dotacion'))return personnelAnswer(ramal);if(q.includes('seguridad')||q.includes('vigilancia')||q.includes('policia'))return securityAnswer(ramal);if(q.includes('cliente')||q.includes('producto'))return clientAnswer(q);if(q.includes('estadistica')||q.includes('cuantos accidentes'))return derailmentAnswer(ramal,`${q} descarrilos`);const station=stationMatch(q);if(station&&(q.includes('estacion')||q.includes('codigo')||q.split(' ').length<=4))return stationAnswer(station);if(ramal)return ramalDescription(ramal);return {text:'No encontré esa información dentro de los datos ferroviarios cargados. Puedo consultar ramales y estados, PK y coordenadas, estaciones y códigos, descarrilos, estadísticas, personal, seguridad o clientes.',source:'Asistente Site Visión · sin respuestas inventadas'};}
 
 function isWeather(q){return hasAny(q,CLIMATE_WORDS)||/\b(?:que|como).*tiempo.*(?:hoy|manana)|\bva a llover\b/.test(q);}
+const REGISTRY_NOTICE='El registro de Site Visión acredita el trámite incorporado, pero no permite determinar por sí solo si la obra fue ejecutada o continúa activa.';
+const REGISTRY_CATEGORIES=['cruces','interferencias'];
+const SERVICE_WORDS=/interferencia|servicio|subterrane|aere[oa]|hidraulic|paralel|cruzante|solicitante|contratista|prefactibilidad|asesoramiento|permiso|alcantarilla|\bcanal\b|\bgas\b|\bagua\b|cloacal|fibra optica|\bfo\b|electric/;
+const CROSSING_WORDS=/cruce|pasos? a nivel|barrera|particular|rutas? cruzan/;
+const TECH_FIELDS=['conductor','camisa','unidad','valor','tapada','altura','angulo','angulo2','ductos','otrasCaracteristicas'];
+const REF_FIELDS=['carpeta','convenio','carpetaGAL','cajaArchivo'];
+const CATEGORY_LABELS={aereo:'Aéreo',subterraneo:'Subterráneo',hidraulico:'Hidráulico',sin_clasificar:'Sin clasificación'};
+const CROSSING_TYPES={a_nivel_pasivo:'A nivel pasivo',a_nivel_barreras:'A nivel con barreras',a_nivel_fonoluminoso:'A nivel fonoluminoso',alto_nivel:'Alto nivel',bajo_nivel:'Bajo nivel'};
+function registryCategories(q){
+ const service=SERVICE_WORDS.test(q),cross=CROSSING_WORDS.test(q);
+ return [...(cross&&(!service||/habilitad|barrera|pasos? a nivel|compar/.test(q))?['cruces']:[]),...(service?['interferencias']:[])];
+}
+function registryDistance(r,pk,category){
+ if(!Number.isFinite(pk))return null;
+ const tramo=category==='interferencias'&&Number.isFinite(r.pkDesde)&&Number.isFinite(r.pkHasta);
+ const target=tramo?Math.max(Math.min(r.pkDesde,r.pkHasta),Math.min(Math.max(r.pkDesde,r.pkHasta),pk)):Number.isFinite(r.pk)?r.pk:null;
+ return target===null?null:{distance:Math.abs(target-pk)*1000,direction:target>pk?'ascendente':target<pk?'descendente':null};
+}
+function registryRows(category,q,ramal,pk){
+ const source=category==='cruces'?'CRUCES_HABILITADOS':'INTERFERENCIAS_UP_SALTA',raw=getData(source);
+ let rows=Array.isArray(raw)?raw.filter(r=>!ramal||(category==='cruces'?r.ramal===ramal:r.ramales?.includes(ramal))):[];
+ if(category==='cruces'){
+  if(/barrera/.test(q))rows=rows.filter(r=>r.tipo==='a_nivel_barreras');
+  if(/particular/.test(q))rows=rows.filter(r=>r.ambito==='particular');
+  if(/public[oa]/.test(q))rows=rows.filter(r=>r.ambito==='publico');
+  if(/rutas? cruzan|que rutas?/.test(q))rows=rows.filter(r=>r.ruta);
+ }else{
+  for(const [pattern,value] of [[/subterrane/,'subterraneo'],[/aere[oa]/,'aereo'],[/hidraulic/,'hidraulico'],[/sin clasifica/,'sin_clasificar']])if(pattern.test(q))rows=rows.filter(r=>r.categoria===value);
+  if(/paralel/.test(q))rows=rows.filter(r=>['paralelo','cruzante y paralelo'].includes(r.disposicion));
+  if(/cruzante/.test(q))rows=rows.filter(r=>['cruzante','cruzante y paralelo'].includes(r.disposicion));
+  for(const [pattern,value] of [[/permiso/,'permiso'],[/prefactibilidad/,'prefactibilidad'],[/asesoramiento/,'asesoramiento'],[/otros tramites/,'otros tramites'],[/no derivad/,'no derivado por legales / inmuebles']])if(pattern.test(q))rows=rows.filter(r=>r.tramite===value);
+  for(const pattern of [/\bgas\b/,/\bagua\b/,/cloacal/,/electric/,/\bcanal\b/,/alcantarilla/])if(pattern.test(q))rows=rows.filter(r=>pattern.test(normalize(r.conduccionOriginal)));
+  if(/fibra optica|\bfo\b/.test(q))rows=rows.filter(r=>/\bfo\b/.test(normalize(r.conduccionOriginal)));
+  for(const [word,field] of [['solicitante','solicitante'],['contratista','contratista'],['localidad','localidad']]){
+   const match=q.match(new RegExp('\\b'+word+'\\s+(?:es\\s+)?(.+?)(?=\\s+(?:en\\s+)?(?:ramal\\b|c(?:13|14|15|16|18|25)?\\b|pk\\b|km\\b)|$)'));
+   if(match&&!/^(de|del|tiene|figura|registrad|y)\b/.test(match[1]))rows=rows.filter(r=>normalize(r[field]).includes(match[1]));
+  }
+  // Names already present in the source can be queried without a field prefix.
+  for(const field of ['solicitante','contratista','localidad','denominacionObra']){
+   const names=[...new Set((Array.isArray(raw)?raw:[]).map(r=>normalize(r[field]||'')).filter(n=>n.length>3&&q.includes(n)&&!(field==='localidad'&&n==='salta')))];
+   if(names.length)rows=rows.filter(r=>names.includes(normalize(r[field]||'')));
+  }
+ }
+ if(Number.isFinite(pk))rows=rows.filter(r=>registryDistance(r,pk,category)!==null).sort((a,b)=>registryDistance(a,pk,category).distance-registryDistance(b,pk,category).distance||(a.pk??a.pkDesde??0)-(b.pk??b.pkDesde??0)||(a.id??0)-(b.id??0));
+ return {raw,source,rows};
+}
+function registrySummary(category,rows){
+ const counts=field=>Object.entries(rows.reduce((a,r)=>{const key=r[field]??'No informado';a[key]=(a[key]||0)+1;return a;},{})).map(([k,n])=>`${CATEGORY_LABELS[k]||k}: ${n}`).join(' · ');
+ return category==='cruces'?`Por ramal: ${counts('ramal')}`:`Por trámite: ${counts('tramite')}\nPor categoría: ${counts('categoria')}`;
+}
+function registryLocation(r,category){
+ if(category==='cruces')return `Ramal ${r.ramal} · PK ${fmt(r.pk)}`;
+ const tramo=Number.isFinite(r.pkDesde)&&Number.isFinite(r.pkHasta);
+ return `Ramal ${r.ramalOriginal} · `+[Number.isFinite(r.pk)?`PK ${fmt(r.pk)}`:null,tramo?`Tramo PK ${fmt(r.pkDesde)} a ${fmt(r.pkHasta)}`:null,!Number.isFinite(r.pk)&&!tramo?'Sin PK suficiente':null].filter(Boolean).join(' · ');
+}
+function registryLine(r,category,pk,q){
+ const near=registryDistance(r,pk,category);
+ const proximity=near?near.direction?`A ${Math.round(near.distance)} m hacia progresiva ${near.direction}`:'Coincide con el PK o tramo consultado':null;
+ if(category==='cruces')return [registryLocation(r,category),r.ambito==='publico'?'Público':r.ambito==='particular'?'Particular':null,CROSSING_TYPES[r.tipo]||r.tipo,[r.calle,r.ruta].filter(Boolean).join(' · '),proximity].filter(Boolean).join(' · ');
+ const fields=[['Localidad',r.localidad],['Provincia',r.provincia],['Calle',r.calle],['Solicitante',r.solicitante],['Contratista',r.contratista],['Obra',r.denominacionObra]];
+ const tech=r.tecnico||{};
+ const technical=Object.entries({conductor:'Conductor',camisa:'Camisa',tapada:'Tapada',altura:'Altura',angulo:'Ángulo',angulo2:'Ángulo 2',ductos:'Ductos',otrasCaracteristicas:'Otras características'}).map(([k,label])=>[label,tech[k]]);
+ if(tech.valor!=null)technical.push(['Valor',`${tech.valor} ${tech.unidad==='Kv'?'kV':tech.unidad||''}`.trim()]);else if(tech.unidad)technical.push(['Unidad',tech.unidad]);
+ const refs=/referencia administrativa|carpeta|convenio|caja|archivo/.test(q)?Object.entries(r.referencia||{}):[];
+ return [registryLocation(r,category),`${CATEGORY_LABELS[r.categoria]||r.categoria} · ${r.conduccionOriginal||'Conducción no informada'} · ${r.disposicion||'Disposición no informada'}`,`Trámite: ${r.tramite}`,proximity,...[...fields,...technical,...refs,['Observaciones',r.observaciones]].filter(([,v])=>v!==null&&v!==undefined&&v!=='').map(([k,v])=>`${k}: ${v}`)].filter(Boolean).join('\n');
+}
+function registryAnswer(question,context){
+ const q=normalize(question),categories=context.categories.filter(c=>REGISTRY_CATEGORIES.includes(c));
+ if(!categories.length)return null;
+ if(categories.includes('interferencias')&&/construid|ejecutad|activa|en servicio|constatad/.test(q))return {text:REGISTRY_NOTICE,source:'INTERFERENCIAS_UP_SALTA · registros de trámites',context,localOnly:true};
+ if(context.pk!==null&&!context.ramal)return {text:'Indicame el ramal para buscar el registro más próximo a ese PK.',source:'Site Visión · consulta interna',context,localOnly:true};
+ const blocks=[];
+ for(const category of categories){
+  const {raw,rows}=registryRows(category,q,context.ramal,context.pk),title=category==='cruces'?'Cruces habilitados':'Interferencias / Servicios';
+  if(!Array.isArray(raw)){blocks.push(`${title}: dataset no disponible.`);continue;}
+  if(!rows.length){blocks.push(`${title}: 0 registros coincidentes con la consulta.`);continue;}
+  if(context.pk!==null){
+   const best=registryDistance(rows[0],context.pk,category).distance;
+   const nearest=rows.filter(r=>Math.abs(registryDistance(r,context.pk,category).distance-best)<1e-6);
+   const tolerance=window.CrucesHabilitados?.TOLERANCIA_COINCIDENCIA_M??1;
+   const heading=category==='cruces'?(best<=tolerance+1e-6?'Cruce habilitado en este sector':'Cruce habilitado más próximo'):(best<=1+1e-6?'Interferencia registrada en este sector':'Interferencia registrada más próxima');
+   blocks.push(`${title}:\n${heading}${nearest.length>1?` · ${nearest.length} registros` :''}\n${nearest.map(r=>registryLine(r,category,context.pk,q)).join('\n\n')}`);
+  }else{
+   const summaryOnly=/cuant|total|resumen|compar|informacion/.test(q)||categories.length>1;
+   blocks.push(`${title}${context.ramal?' · Ramal '+context.ramal:''}: ${rows.length} registros.\n${registrySummary(category,rows)}${summaryOnly?'':'\n'+rows.slice(0,8).map(r=>registryLine(r,category,null,q)).join('\n\n')+(rows.length>8?`\nSe muestran 8 de ${rows.length} registros; ${rows.length-8} omitidos.`:'')}`);
+  }
+ }
+ if(context.categories.includes('red')&&context.ramal&&context.pk!==null){const station=nearestStation(context.ramal,context.pk);if(station)blocks.push(`Estaciones: referencia más próxima ${station.nombre}, PK ${fmt(station.pk)}.`);}
+ else for(const [category,sets] of Object.entries(context.datasets))if(!REGISTRY_CATEGORIES.includes(category))blocks.push(`${category}: ${sets.map(d=>`${d.source}: ${d.total} registros`).join(' · ')}.`);
+ if(categories.includes('interferencias'))blocks.push(REGISTRY_NOTICE);
+ return {text:blocks.join('\n\n'),source:'Site Visión · '+categories.map(c=>c==='cruces'?'CRUCES_HABILITADOS':'INTERFERENCIAS_UP_SALTA').join(' / '),context,localOnly:true};
+}
+function contextValue(value){
+ if(typeof value==='string')return isWeather(normalize(value))||/clima|meteo|pronostic|rafaga|lluvia|viento|temperatura|humedad|tormenta/.test(normalize(value))?null:value.slice(0,800);
+ if(value===null||typeof value==='boolean'||typeof value==='number')return value;
+ if(Array.isArray(value))return value.slice(0,50).map(contextValue);
+ return null;
+}
 const CONTEXT_FIELDS={
  estaciones:['nombre','codigo','ramal','pk','referencia'],
  personal:['localidad','nombre','ramal','pk','uf','lf','capataz','operarios','cantidad'],
  seguridad:['localidad','ramal','pk','tipo','objetivo','dispositivo'],
  descarrilos:['fecha','ramal','pk','causa','tipo','demora_dias'],
- clientes:['nombre','ramal','pk','producto']
+ clientes:['nombre','ramal','pk','producto'],
+ cruces:['ramal','pk','ambito','tipo','calle','ruta'],
+ interferencias:['id','tramite','ramalOriginal','ramales','pk','pkDesde','pkHasta','localidad','calle','provincia','solicitante','contratista','disposicion','conduccionOriginal','categoria','denominacionObra','observaciones','tecnico','referencia']
 };
 function classifySiteQuery(question) {
  const q=question.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
  if(isWeather(q))return 'clima';
+ if(registryCategories(q).length)return 'interna';
  const history=/histori|construy|construccion|inaugur|cuando llego.*ferrocarril/.test(q);
  const technical=/riel|trocha|normativa ferroviaria|norma ferroviaria|reglamento ferroviario/.test(q)&&/caracteristic|diferencia|que es|tecnic|normativ|norma|reglamento/.test(q);
  const internal=/cargad|site vision|personal|dotacion|dispositivo|seguridad|\bpk\b|estado operativo/.test(q);
@@ -53,25 +154,29 @@ function classifySiteQuery(question) {
 
 function contextFor(question){
  const q=normalize(question),explicit=ramalFrom(q);
- const follow=!explicit&&/^(y |cual |cuanto tiempo|que sector|esos |esas )/.test(q);
+ const follow=!explicit&&/^(y |cual |cuanto tiempo|cuantas? son|cuantos? son|que sector|esos |esas |esta construid|esta ejecutad|sigue activa|sigue en servicio)/.test(q);
  const previous=state.context;
  const ramal=explicit||(follow?previous?.ramal:null)||null;
  const pk=pkFrom(q)??(follow?previous?.pk:null)??null;
  let intent=/mas atencion|prioriz/.test(q)?'priorizacion':/riesgo|inconsisten|contradic/.test(q)?'riesgo':/compar|diferencia/.test(q)?'comparacion':/cuant|total|promedio|porcentaje|estadistic/.test(q)?'calculo':/analiz|por que|criterio/.test(q)?'analisis':/informacion|resumen/.test(q)?'resumen':follow?'seguimiento':'factual';
- let categories=[];
+ let categories=registryCategories(q);
  if(/personal|dotacion/.test(q))categories.push('personal');
  if(/seguridad|vigilancia|policia/.test(q))categories.push('seguridad');
- if(/descarr|accidente|estadistic/.test(q))categories.push('descarrilos');
+ if(/descarr|accidente/.test(q)||(!categories.length&&/estadistic/.test(q)))categories.push('descarrilos');
  if(/estacion|codigo/.test(q))categories.push('estaciones');
  if(/cliente|producto/.test(q))categories.push('clientes');
  if(/infraestructura|instalacion/.test(q))categories.push('infraestructura');
- if(!categories.length)categories=follow&&previous?previous.categories:((pk!==null||/estado|rango|inactiv|estacion|codigo/.test(q))?['red']:['red','estaciones','personal','seguridad','descarrilos','clientes','infraestructura']);
+ if(!categories.length)categories=follow&&previous?previous.categories:((pk!==null||/estado|rango|inactiv|estacion|codigo/.test(q))?(/registrad|que hay|cerca/.test(q)?['red','estaciones','cruces','interferencias']:['red']):['red','estaciones','personal','seguridad','descarrilos','clientes','infraestructura','cruces','interferencias']);
  const datasets={};
- const sources={estaciones:['STATIONS'],personal:['PERSONAL_TRAFICO','PERSONAL_VIA','PERSONAL_MECANICA'],seguridad:['DISPOSITIVO_SEGURIDAD'],descarrilos:['DESCARRILOS'],clientes:['CLIENTES']};
+ const sources={estaciones:['STATIONS'],personal:['PERSONAL_TRAFICO','PERSONAL_VIA','PERSONAL_MECANICA'],seguridad:['DISPOSITIVO_SEGURIDAD'],descarrilos:['DESCARRILOS'],clientes:['CLIENTES'],cruces:['CRUCES_HABILITADOS'],interferencias:['INTERFERENCIAS_UP_SALTA']};
  for(const category of categories){
   if(category==='red'||category==='infraestructura')continue;
   datasets[category]=sources[category].map(source=>{
    const raw=getData(source);
+   if(REGISTRY_CATEGORIES.includes(category)){
+    const {rows}=registryRows(category,q,ramal,pk);
+    return {source,status:!Array.isArray(raw)?'no disponible':rows.length?'registros disponibles':'sin registros coincidentes',total:rows.length,omitted:Math.max(0,rows.length-12),summary:contextValue(registrySummary(category,rows)),records:rows.slice(0,12).map(r=>Object.fromEntries(CONTEXT_FIELDS[category].map(k=>[k,k==='tecnico'||k==='referencia'?Object.fromEntries((k==='tecnico'?TECH_FIELDS:REF_FIELDS).map(field=>[field,contextValue(r[k]?.[field]??null)])):contextValue(r[k]??null)])))};
+   }
    let rows=Array.isArray(raw)?raw.filter(r=>!ramal||r.ramal===ramal):[];
    if(category==='descarrilos'){const f=derailmentFilters(q,ramal);rows=rows.filter(r=>(!f.month||Number(String(r.fecha).slice(5,7))===f.month)&&(!f.year||Number(String(r.fecha).slice(0,4))===f.year));}
    return {source,status:!Array.isArray(raw)?'no disponible':rows.length?'registros disponibles':'sin registros coincidentes; no equivale a cero',total:rows.length,omitted:Math.max(0,rows.length-12),records:rows.slice(0,12).map(r=>Object.fromEntries(CONTEXT_FIELDS[category].map(k=>[k,typeof r[k]==='string'&&isWeather(normalize(r[k]))?null:r[k]??null])))};
@@ -79,6 +184,8 @@ function contextFor(question){
  }
  const meta=ramal?getData('NETWORK')?.[ramal]:null;
  const context={schema:'site-v1',ramal,pk,intent,categories,previousIntent:follow?previous?.intent||null:null,entities:follow?previous?.entities||[]:[],red:meta?{nombre:meta.nombre??null,km_inicio:meta.km_inicio,km_fin:meta.km_fin,estado:RAMAL_STATUS[ramal]||null,source:'NETWORK / RAMAL_STATUS; configuración sin fecha de vigencia'}:null,datasets,missing:['Fecha de vigencia no informada','Fecha de inicio de inactividad no disponible',...(categories.includes('infraestructura')?['Inventario de infraestructura no conectado al asistente']:[])]};
+ // Keep exact summaries while reducing samples, never the complete-dataset totals.
+ while(JSON.stringify(context).length>23000){const largest=Object.values(datasets).flat().filter(d=>d.records.length).sort((a,b)=>JSON.stringify(b.records).length-JSON.stringify(a.records).length)[0];if(!largest)break;largest.records.pop();largest.omitted=largest.total-largest.records.length;}
  state.context={ramal,pk,intent,categories,entities:[...new Set(Object.values(datasets).flat().flatMap(d=>d.records.map(r=>r.localidad||r.nombre).filter(Boolean)))].slice(0,12)};
  return context;
 }
@@ -90,6 +197,7 @@ function answer(question){
  const route=classifySiteQuery(question);
  const context=(route==='historia'||route==='tecnica')?{schema:'site-v1',ramal:ramalFrom(q)||state.context?.ramal||null,pk:null,intent:route,categories:[],entities:[],red:null,datasets:{},missing:[]}:contextFor(question);
  if(route==='historia'||route==='tecnica')return {text:'No tengo información pública verificada suficiente para responder esta consulta.',source:'Consulta pública pendiente',context};
+ const registry=registryAnswer(question,context);if(registry)return registry;
  const scoped=context.ramal&&!ramalFrom(q)?question+' ramal '+context.ramal:question;
  let local=legacyAnswer(scoped)||{text:'No tengo información suficiente para determinarlo.',source:'Site Visión'};
  const multi=context.categories.length>1;
@@ -102,12 +210,12 @@ function answer(question){
  return {...local,context};
 }
 
-function helpAnswer(){return {text:'Puedo consultar los datos ya incorporados en Site Visión:\n• estado y rango de ramales\n• PK y coordenadas\n• estaciones y códigos telegráficos\n• descarrilos por mes, año o ramal\n• estadísticas del histórico\n• personal, seguridad y clientes\nNo modifico ningún dato.',source:'Asistente ferroviario privado · solo lectura'};}
+function helpAnswer(){return {text:'Puedo consultar los datos ya incorporados en Site Visión:\n• estado y rango de ramales\n• PK y coordenadas\n• estaciones y códigos telegráficos\n• descarrilos por mes, año o ramal\n• estadísticas del histórico\n• personal, seguridad y clientes\n• cruces habilitados: conteos, rutas y proximidad por PK\n• interferencias y servicios: trámites, conducción, tramos y datos técnicos\nLas interferencias son registros de trámites; no acreditan ejecución ni servicio activo.\nNo modifico ningún dato.',source:'Asistente ferroviario privado · solo lectura'};}
 function addMessage(role,result){const messages=document.getElementById('sv-assistant-messages');if(!messages)return;const row=document.createElement('div');row.className=`sv-assistant-row ${role}`;if(role==='bot'){const avatar=document.createElement('span');avatar.className='sv-assistant-avatar';avatar.textContent='S';row.appendChild(avatar);}const bubble=document.createElement('div');bubble.className='sv-assistant-bubble';bubble.textContent=typeof result==='string'?result:result.text;if(result?.source){const source=document.createElement('span');source.className='sv-assistant-source';source.textContent=result.source;bubble.appendChild(source);}if(result?.actions?.length){const actions=document.createElement('div');actions.className='sv-assistant-actions';result.actions.forEach(action=>{const control=action.type==='link'?document.createElement('a'):document.createElement('button');control.className=`sv-assistant-action${action.primary?' primary':''}`;control.textContent=action.label;if(action.type==='link')control.href=action.href;else{control.type='button';control.addEventListener('click',()=>runAction(action));}actions.appendChild(control);});bubble.appendChild(actions);}if(result?.sources?.length){const refs=document.createElement('div');result.sources.forEach((item,i)=>{if(!/^https:\/\//.test(item.uri))return;const a=document.createElement('a');a.href=item.uri;a.target='_blank';a.rel='noopener noreferrer';a.textContent=`[${i+1}] ${item.title}`;refs.appendChild(a);refs.appendChild(document.createElement('br'));});bubble.appendChild(refs);}if(result?.searchSuggestions){const frame=document.createElement('iframe');frame.title='Sugerencias de Google Search';frame.setAttribute('sandbox','allow-popups allow-popups-to-escape-sandbox');frame.style.width='100%';frame.style.border='0';frame.style.height='160px';frame.srcdoc=result.searchSuggestions;bubble.appendChild(frame);}row.appendChild(bubble);messages.appendChild(row);messages.scrollTop=messages.scrollHeight;}
 async function runAction(action){if(action.type==='copy'){try{await navigator.clipboard.writeText(action.value);addMessage('bot',{text:'Coordenadas copiadas.',source:'Site Visión'});}catch(_){addMessage('bot',{text:action.value,source:'Copiá estas coordenadas manualmente'});}return;}if(action.type==='map'){const selector=document.getElementById('ramal'),input=document.getElementById('km');if(selector&&input){selector.value=action.ramal;selector.dispatchEvent(new Event('change',{bubbles:true}));input.value=fmt(action.pk);const search=getData('buscar');if(typeof search==='function')search();close();document.getElementById('map')?.scrollIntoView({behavior:'smooth',block:'center'});}}}
 function open(){const panel=document.getElementById('sv-assistant-panel'),launcher=document.getElementById('sv-assistant-launcher');panel?.classList.add('open');panel?.setAttribute('aria-hidden','false');launcher?.setAttribute('aria-expanded','true');if(!state.welcomed){state.welcomed=true;addMessage('bot',{text:'Hola. Consulto únicamente los datos ferroviarios cargados en Site Visión y siempre en modo de solo lectura.',source:'Asistente Site Visión'});}setTimeout(()=>document.getElementById('sv-assistant-input')?.focus(),80);}
 function close(){const panel=document.getElementById('sv-assistant-panel'),launcher=document.getElementById('sv-assistant-launcher');panel?.classList.remove('open');panel?.setAttribute('aria-hidden','true');launcher?.setAttribute('aria-expanded','false');}
-async function submit(event){event.preventDefault();const input=document.getElementById('sv-assistant-input');const question=input?.value.trim();if(!question||state.busy)return;input.value='';addMessage('user',question);state.busy=true;input.disabled=true;const placeholder=input.placeholder;input.placeholder='Consultando…';try{const local=answer(question);let result=local;try{const ai=await import('/assistant-reasoning.js');result=await ai.analyze('site',question,local);}catch(_){result={...local,source:local.source+' · Respaldo local'};}addMessage('bot',result);}finally{state.busy=false;input.disabled=false;input.placeholder=placeholder;}}
+async function submit(event){event.preventDefault();const input=document.getElementById('sv-assistant-input');const question=input?.value.trim();if(!question||state.busy)return;input.value='';addMessage('user',question);state.busy=true;input.disabled=true;const placeholder=input.placeholder;input.placeholder='Consultando…';try{const local=answer(question);let result=local;try{if(!local.localOnly){const ai=await import('/assistant-reasoning.js');result=await ai.analyze('site',question,local);}}catch(_){result={...local,source:local.source+' · Respaldo local'};}addMessage('bot',result);}finally{state.busy=false;input.disabled=false;input.placeholder=placeholder;}}
 function build(){const root=document.createElement('div');root.id='sv-assistant-root';root.innerHTML='<button class="sv-assistant-launcher" id="sv-assistant-launcher" type="button" aria-label="Abrir asistente Site Visión" aria-controls="sv-assistant-panel" aria-expanded="false">S<span class="sv-assistant-live" aria-hidden="true"></span></button><section class="sv-assistant-panel" id="sv-assistant-panel" aria-label="Asistente ferroviario Site Visión" aria-hidden="true"><header class="sv-assistant-header"><div class="sv-assistant-mark" aria-hidden="true">S</div><div><div class="sv-assistant-title">Asistente Site Visión</div><div class="sv-assistant-status">Datos ferroviarios · solo lectura</div></div><button class="sv-assistant-close" type="button" aria-label="Cerrar asistente">×</button></header><div class="sv-assistant-messages" id="sv-assistant-messages" aria-live="polite"></div><div class="sv-assistant-suggestions"><button class="sv-assistant-suggestion" type="button">Estado de los ramales</button><button class="sv-assistant-suggestion" type="button">C15 km 1400,400</button><button class="sv-assistant-suggestion" type="button">Estación SLA</button><button class="sv-assistant-suggestion" type="button">Descarrilos de febrero</button><button class="sv-assistant-suggestion" type="button">Estadísticas de descarrilos</button></div><form class="sv-assistant-form" id="sv-assistant-form"><input class="sv-assistant-input" id="sv-assistant-input" maxlength="180" autocomplete="off" placeholder="Ej.: C15 km 1400,400" aria-label="Consulta ferroviaria"><button class="sv-assistant-send" type="submit" aria-label="Enviar consulta">➤</button></form></section>';document.body.appendChild(root);root.querySelector('#sv-assistant-launcher').addEventListener('click',()=>root.querySelector('#sv-assistant-panel').classList.contains('open')?close():open());root.querySelector('.sv-assistant-close').addEventListener('click',close);root.querySelector('#sv-assistant-form').addEventListener('submit',submit);root.querySelectorAll('.sv-assistant-suggestion').forEach(button=>button.addEventListener('click',()=>{open();const input=root.querySelector('#sv-assistant-input');input.value=button.textContent;submit({preventDefault(){}});}));}
 window.SiteVisionAssistant=Object.freeze({answer});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();
