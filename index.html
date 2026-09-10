@@ -923,6 +923,13 @@ body::after{
 <button class="tab" id="tabSeguridad" type="button">🛡 DISPOSITIVO DE SEGURIDAD</button>
 <button class="tab" id="tabClientes" type="button">👥 CLIENTES</button>
 </div>
+<details id="crucesControl" style="margin:12px 0;padding:10px;border:1px solid #334a60;border-radius:8px">
+<summary>CRUCES HABILITADOS</summary>
+<label style="display:block;margin:8px 0"><input id="crucesActiva" type="checkbox" style="width:auto"> Mostrar cruces habilitados</label>
+<label style="display:block;margin:8px 0"><input id="crucesEtiquetas" type="checkbox" checked style="width:auto"> Mostrar etiquetas</label>
+<small>Las etiquetas permanentes aparecen al acercar el mapa (zoom 14). Cada cruce también tiene etiqueta al señalarlo.</small>
+<p id="crucesCantidad" aria-live="polite"></p>
+</details>
 <details id="interferenciasControl" style="margin:12px 0;padding:10px;border:1px solid #334a60;border-radius:8px">
 <summary>INTERFERENCIAS / SERVICIOS</summary>
 <label style="display:block;margin:8px 0"><input id="interferenciasActiva" type="checkbox" style="width:auto"> Mostrar capa en el mapa</label>
@@ -2067,13 +2074,15 @@ initPersonal();
 initSeguridad();
 initClientes();
 init();
-window.Interferencias?.init({L,map,resolve(ramal,pk){
+const capasRegistrosAdapter={L,map,resolve(ramal,pk){
   const m=CAT.ramales.find(r=>r.ramal===ramal),pts=NETWORK[ramal]?.puntos;
   if(!m||!pts?.length||!Number.isFinite(pk)||pk<m.km_inicio||pk>m.km_fin||pk<pts[0][0]||pk>pts[pts.length-1][0])return null;
   if((ramal==='C14'&&c14Gap(pk))||(ramal==='C'&&lineaCGap(pk)))return null;
   const p=findPoint(pts,pk);
   return p&&Number.isFinite(p[1])&&Number.isFinite(p[2])?[p[1],p[2]]:null;
-}});
+}};
+window.Interferencias?.init(capasRegistrosAdapter);
+window.CrucesHabilitados?.init(capasRegistrosAdapter);
 
 
 (function(){
