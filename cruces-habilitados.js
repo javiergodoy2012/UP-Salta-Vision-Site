@@ -61,7 +61,7 @@
   if(adapter)return;
   adapter=config;layer=config.L.layerGroup();
   const records=root.CRUCES_HABILITADOS||[];
-  const icon=config.L.divIcon({className:'cruce-habilitado-pin',html:'<span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;background:#ffd43b;color:#102638;border:2px solid #102638;border-radius:6px;box-shadow:0 0 0 1px #fff,0 2px 5px #0008;font-size:18px;font-weight:900">X</span>',iconSize:[32,32],iconAnchor:[16,16],popupAnchor:[0,-16]});
+  const icon=adapter.L.divIcon({className:'cruce-habilitado-pin',html:'<span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;background:#ffd43b;color:#102638;border:2px solid #102638;border-radius:6px;box-shadow:0 0 0 1px #fff,0 2px 5px #0008;font-size:18px;font-weight:900">X</span>',iconSize:[32,32],iconAnchor:[16,16],popupAnchor:[0,-16]});
   for(const record of records){
    const pos=config.resolve(record.ramal,record.pk);
    if(!Array.isArray(pos)||pos.length<2||!Number.isFinite(pos[0])||!Number.isFinite(pos[1]))continue;
