@@ -3036,7 +3036,7 @@ function buildCommunityForecastCanvas(){
   const rows=communityForecastRows(dates);
   const canvas=document.createElement('canvas');
   const W=2048,margin=36,ramalW=150,localityW=340,dateW=(W-margin*2-ramalW-localityW)/7;
-  const top=235,headerH=94,rowH=56,footerH=150;
+  const top=235,headerH=94,rowH=56,footerH=205;
   const H=top+headerH+rows.length*rowH+footerH;
   canvas.width=W;canvas.height=H;
   const ctx=canvas.getContext('2d');
@@ -3067,8 +3067,14 @@ function buildCommunityForecastCanvas(){
       ctx.fillStyle=day.missing?'#24364D':communityRainColor(day.rain);ctx.fillRect(x,y,dateW,rowH);
       ctx.textAlign='center';
       if(day.missing){ctx.fillStyle='#AFC2D8';ctx.font='21px Arial, sans-serif';ctx.fillText('⚪  —',x+dateW/2,y+35);return;}
-      ctx.fillStyle='#FFFFFF';ctx.font='700 21px Arial, sans-serif';ctx.fillText(`${day.condition.emoji}  ${reportRound(day.max)}°`,x+dateW/2,y+23);
-      ctx.fillStyle='#DCE8F5';ctx.font='18px Arial, sans-serif';ctx.fillText(`${reportRound(day.rain)} mm`,x+dateW/2,y+46);
+      ctx.font='700 21px Arial, sans-serif';
+      const iconText=`${day.condition.emoji}  `,temperatureText=`${reportRound(day.max)}°`;
+      const iconWidth=ctx.measureText(iconText).width,temperatureWidth=ctx.measureText(temperatureText).width;
+      const textX=x+(dateW-iconWidth-temperatureWidth)/2;
+      ctx.textAlign='left';ctx.fillStyle='#FFFFFF';ctx.fillText(iconText,textX,y+23);
+      ctx.fillStyle=day.max>=31?'#FF4545':day.max>27?'#FFE600':'#FFFFFF';
+      ctx.fillText(temperatureText,textX+iconWidth,y+23);
+      ctx.textAlign='center';ctx.fillStyle='#DCE8F5';ctx.font='700 18px Arial, sans-serif';ctx.fillText(`${reportRound(day.rain)} mm`,x+dateW/2,y+46);
     });
   });
 
@@ -3091,8 +3097,12 @@ function buildCommunityForecastCanvas(){
   const fy=tableY+headerH+rows.length*rowH+28;
   ctx.textAlign='left';ctx.fillStyle='#DCE8F5';ctx.font='700 21px Arial, sans-serif';ctx.fillText('ESCALA DE PRECIPITACIÓN:',margin+10,fy+25);
   const legend=[['0–14 mm','#17304D'],['15–24 mm','#166534'],['25–35 mm','#A16207'],['Más de 35 mm','#991B1B']];
-  legend.forEach((item,i)=>{const x=340+i*285;roundRectPath(ctx,x,fy,265,45,10);ctx.fillStyle=item[1];ctx.fill();ctx.fillStyle='#FFFFFF';ctx.textAlign='center';ctx.font='700 19px Arial, sans-serif';ctx.fillText(item[0],x+132,fy+29);});
-  ctx.textAlign='center';ctx.fillStyle='#AFC2D8';ctx.font='20px Arial, sans-serif';ctx.fillText('Fuente: Open-Meteo · Verificar alertas oficiales del SMN · upsaltavision.com.ar',W/2,fy+92);
+  legend.forEach((item,i)=>{const x=400+i*285;roundRectPath(ctx,x,fy,265,45,10);ctx.fillStyle=item[1];ctx.fill();ctx.fillStyle='#FFFFFF';ctx.textAlign='center';ctx.font='700 19px Arial, sans-serif';ctx.fillText(item[0],x+132,fy+29);});
+  const temperatureY=fy+55;
+  ctx.textAlign='left';ctx.fillStyle='#DCE8F5';ctx.font='700 21px Arial, sans-serif';ctx.fillText('ESCALA DE TEMPERATURA:',margin+10,temperatureY+25);
+  const temperatureLegend=[['Hasta 27 °C','#17304D','#FFFFFF'],['27,1–30,9 °C','#FFE600','#07172D'],['31 °C o más','#FF4545','#FFFFFF']];
+  temperatureLegend.forEach((item,i)=>{const x=400+i*285;roundRectPath(ctx,x,temperatureY,265,45,10);ctx.fillStyle=item[1];ctx.fill();ctx.fillStyle=item[2];ctx.textAlign='center';ctx.font='700 19px Arial, sans-serif';ctx.fillText(item[0],x+132,temperatureY+29);});
+  ctx.textAlign='center';ctx.fillStyle='#AFC2D8';ctx.font='20px Arial, sans-serif';ctx.fillText('Fuente: Open-Meteo · Verificar alertas oficiales del SMN · upsaltavision.com.ar',W/2,fy+147);
   return canvas;
 }
 
