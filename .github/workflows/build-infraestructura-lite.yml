@@ -1,0 +1,41 @@
+name: Build Infraestructura Lite data
+
+on:
+  push:
+    branches:
+      - feature/infraestructura-lite-v1
+    paths:
+      - index.html
+      - cruces-habilitados-data.js
+      - interferencias-data.js
+      - scripts/build-infraestructura-lite.py
+      - .github/workflows/build-infraestructura-lite.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/infraestructura-lite-v1
+          fetch-depth: 0
+
+      - name: Generate isolated Infraestructura data
+        run: python3 scripts/build-infraestructura-lite.py
+
+      - name: Commit generated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add infraestructura/data/network-data.js                   infraestructura/data/cruces-habilitados-data.js                   infraestructura/data/interferencias-data.js
+          if git diff --cached --quiet; then
+            echo "No generated changes."
+            exit 0
+          fi
+          git commit -m "Generar datos aislados de Infraestructura Lite"
+          git push origin HEAD:feature/infraestructura-lite-v1
