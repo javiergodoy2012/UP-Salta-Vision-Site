@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>UP Salta · Infraestructura</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIINfQ3pZVZtqjMZrKx0pE2K3vNwR9yM4Qk=" crossorigin="">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="accessNotice" class="access-notice">
+    <strong>Entorno de desarrollo.</strong>
+    Acceso independiente aún no configurado. No publicar esta rama.
+  </div>
+
+  <main class="app-shell">
+    <aside class="panel">
+      <header class="brand">
+        <div class="brand-kicker">UP SALTA</div>
+        <h1>Infraestructura</h1>
+        <p>Localización ferroviaria · Cruces · Interferencias / Servicios</p>
+      </header>
+
+      <section class="card">
+        <h2>Localización ferroviaria</h2>
+        <label for="ramal">Ramal</label>
+        <select id="ramal"></select>
+
+        <label for="pk">PK</label>
+        <input id="pk" inputmode="decimal" autocomplete="off" placeholder="Ej.: 1138,693">
+
+        <button id="buscar" type="button">Buscar</button>
+        <div id="status" class="status" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2>Capas</h2>
+        <label class="check">
+          <input id="toggleCruces" type="checkbox">
+          <span>Cruces Habilitados</span>
+        </label>
+        <label class="check">
+          <input id="toggleInterferencias" type="checkbox">
+          <span>Interferencias / Servicios</span>
+        </label>
+        <p id="layerSummary" class="muted"></p>
+      </section>
+
+      <section id="resultado" class="card result-card" hidden>
+        <h2>Punto seleccionado</h2>
+        <div id="resultadoContenido"></div>
+      </section>
+
+      <footer>
+        Herramienta interna de Infraestructura · UP Salta
+      </footer>
+    </aside>
+
+    <section class="map-wrap" aria-label="Mapa">
+      <div id="map"></div>
+      <div class="legend">
+        <span><i class="rail"></i> Ramal</span>
+        <span><i class="crossing">X</i> Cruce</span>
+        <span><i class="interference">I</i> Interferencia</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="./data/network-data.js"></script>
+  <script src="./data/cruces-habilitados-data.js"></script>
+  <script src="./data/interferencias-data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
