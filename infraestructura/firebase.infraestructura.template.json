@@ -1,4 +1,8 @@
 {
+  "functions": {
+    "source": "functions-infra",
+    "codebase": "infraestructura"
+  },
   "hosting": {
     "site": "REEMPLAZAR_POR_SITE_ID_INFRAESTRUCTURA",
     "public": "infraestructura",
@@ -6,15 +10,26 @@
       "firebase.infraestructura.template.json",
       "README.md",
       "firestore.rules.fragment.txt",
+      "data/**",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/infra-api",
+        "function": {
+          "functionId": "infraestructuraData",
+          "region": "southamerica-east1"
+        }
+      }
     ],
     "headers": [
       {
         "source": "**",
         "headers": [
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Referrer-Policy", "value": "same-origin" }
+          { "key": "Referrer-Policy", "value": "same-origin" },
+          { "key": "Cache-Control", "value": "no-store" }
         ]
       }
     ]
