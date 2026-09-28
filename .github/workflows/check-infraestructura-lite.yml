@@ -31,6 +31,11 @@ jobs:
       - name: Check backend syntax
         run: node --check functions-infra/index.js
 
+      - name: Check deployment scripts
+        run: |
+          bash -n scripts/deploy-infraestructura-lite.sh
+          bash -n scripts/provision-infraestructura-user.sh
+
       - name: Check protected datasets
         run: |
           test -s functions-infra/data/network.json
