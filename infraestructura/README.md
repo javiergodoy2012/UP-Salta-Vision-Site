@@ -8,9 +8,13 @@ Incluye únicamente:
 
 - mapa ferroviario de C, C13, C14, C15, C16 y C18;
 - localizador Ramal + PK;
+- mapas base Google Maps, Google Satélite y Google Relieve;
+- OpenStreetMap como respaldo;
+- capa Red ferroviaria (OpenRailwayMap);
 - Cruces Habilitados;
 - Interferencias / Servicios;
-- ficha del punto seleccionado.
+- ficha del punto seleccionado;
+- botón Ver en Google Maps para el PK localizado.
 
 No carga ni enlaza Site Visión, Clima Alert, Site Bot, Seguridad, personal, descarrilos ni administración general.
 
@@ -110,3 +114,18 @@ Este alta es administrativa y no modifica las autorizaciones de Site Visión o C
 Rama de desarrollo: `feature/infraestructura-lite-v1`.
 
 No fusionar a `main` hasta completar prueba positiva y negativa de acceso.
+
+
+## Google Maps
+
+Durante el despliegue, `scripts/deploy-infraestructura-lite.sh` prepara
+`infraestructura/google-maps-config.js` sin versionar la clave en Git.
+
+El script usa primero `GOOGLE_MAPS_API_KEY` si está definida. Si no, intenta reutilizar la configuración pública vigente de VisionSite.
+
+La clave de Google Maps debe admitir como HTTP referrers:
+
+- `https://up-salta-infraestructura.web.app/*`
+- `https://up-salta-infraestructura.firebaseapp.com/*`
+
+Si Google Maps no está autorizado o no responde, la herramienta activa automáticamente OpenStreetMap · Respaldo.
