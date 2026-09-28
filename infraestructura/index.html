@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="same-origin">
   <title>UP Salta · Infraestructura</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -11,12 +12,25 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <div id="accessNotice" class="access-notice">
-    <strong>Entorno de desarrollo.</strong>
-    Acceso independiente aún no configurado. No publicar esta rama.
+  <section id="accessGate" class="access-gate" aria-live="polite">
+    <div class="access-card">
+      <div class="brand-kicker">UP SALTA</div>
+      <h1>Infraestructura</h1>
+      <p class="access-copy">Localización ferroviaria · Cruces · Interferencias / Servicios</p>
+      <div class="access-separator"></div>
+      <p id="accessGateStatus" class="access-status">Validando acceso…</p>
+      <button id="accessLogin" class="access-login" type="button" hidden>Ingresar con Google</button>
+      <button id="accessRetry" class="access-secondary" type="button" hidden>Reintentar</button>
+      <p class="access-footnote">No existe registro público. El acceso se habilita individualmente para personal autorizado de Infraestructura.</p>
+    </div>
+  </section>
+
+  <div id="infraUser" class="user-chip" hidden>
+    <span id="infraUserEmail"></span>
+    <button id="infraLogout" type="button">Salir</button>
   </div>
 
-  <main class="app-shell">
+  <main id="infraApp" class="app-shell" hidden>
     <aside class="panel">
       <header class="brand">
         <div class="brand-kicker">UP SALTA</div>
@@ -54,9 +68,7 @@
         <div id="resultadoContenido"></div>
       </section>
 
-      <footer>
-        Herramienta interna de Infraestructura · UP Salta
-      </footer>
+      <footer>Herramienta interna de Infraestructura · UP Salta</footer>
     </aside>
 
     <section class="map-wrap" aria-label="Mapa">
@@ -71,9 +83,10 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="./data/network-data.js"></script>
-  <script src="./data/cruces-habilitados-data.js"></script>
-  <script src="./data/interferencias-data.js"></script>
-  <script src="./app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="/__/firebase/init.js"></script>
+  <script src="./access.js"></script>
 </body>
 </html>
