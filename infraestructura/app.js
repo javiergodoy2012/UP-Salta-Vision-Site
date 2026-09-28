@@ -27,23 +27,145 @@ window.startInfraApp = function startInfraApp() {
 
   const map = L.map('map', { zoomControl: true, preferCanvas: true }).setView([-24.7,-65.2], 7);
 
-  // Basemap servido por CARTO. Evita utilizar directamente los servidores
-  // comunitarios tile.openstreetmap.org, que bloquearon esta aplicación por
-  // su política de uso. Los datos cartográficos continúan atribuidos a OSM.
-  const baseMap = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  const osmFallback = L.tileLayer(
+    'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
     {
-      subdomains: 'abcd',
+      subdomains: 'abc',
       maxZoom: 20,
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+      attribution: '&copy; OpenStreetMap contributors · Tiles &copy; OpenStreetMap France'
+    }
+  ).addTo(map);
+
+  const openRailway = L.tileLayer(
+    'https://tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png',
+    {
+      maxZoom: 19,
+      opacity: .58,
+      attribution: 'OpenRailwayMap'
     }
   );
-  baseMap.addTo(map);
+
+  const baseLayers = {
+    'OpenStreetMap · Respaldo': osmFallback
+  };
+  const overlays = {
+    'Red ferroviaria': openRailway
+  };
+
+  const layerControl = L.control.layers(baseLayers, overlays, {
+    position: 'topleft',
+    collapsed: true
+  }).addTo(map);
+
+  let googleLayers = [];
+  let googleMapsPromise = null;
+
+  const MapStatus = L.Control.extend({
+    options: { position: 'bottomleft' },
+    onAdd: function(){
+      this._el = L.DomUtil.create('div','infra-map-status');
+      this._el.textContent = 'Mapa: OpenStreetMap · respaldo';
+      L.DomEvent.disableClickPropagation(this._el);
+      return this._el;
+    },
+    setText: function(text){
+      if (this._el) this._el.textContent = text;
+    }
+  });
+  const mapStatus = new MapStatus().addTo(map);
+
+  function useOsmFallback(reason){
+    googleLayers.forEach(layer => {
+      if (map.hasLayer(layer)) map.removeLayer(layer);
+    });
+    if (!map.hasLayer(osmFallback)) osmFallback.addTo(map);
+    mapStatus.setText('Mapa: OpenStreetMap · respaldo');
+    if (reason) console.warn('[Infraestructura] Google Maps no disponible:', reason);
+  }
+
+  function loadGoogleMaps(){
+    if (window.google && window.google.maps) return Promise.resolve();
+    if (googleMapsPromise) return googleMapsPromise;
+
+    googleMapsPromise = new Promise((resolve,reject) => {
+      const key = String(window.VISION_GOOGLE_MAPS_API_KEY || '').trim();
+      if (!key) {
+        reject(new Error('Falta la configuración de Google Maps.'));
+        return;
+      }
+
+      const callback = '__infraestructuraGoogleReady';
+      const timeout = setTimeout(
+        () => reject(new Error('Google Maps demoró demasiado en responder.')),
+        15000
+      );
+
+      window[callback] = () => {
+        clearTimeout(timeout);
+        delete window[callback];
+        resolve();
+      };
+
+      window.gm_authFailure = () => {
+        clearTimeout(timeout);
+        useOsmFallback('Google rechazó la clave configurada.');
+        reject(new Error('Google rechazó la clave configurada.'));
+      };
+
+      const script = document.createElement('script');
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=' +
+        encodeURIComponent(key) +
+        '&loading=async&callback=' + callback + '&v=weekly';
+      script.async = true;
+      script.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('No se pudo cargar Google Maps.'));
+      };
+      document.head.appendChild(script);
+    });
+
+    return googleMapsPromise;
+  }
+
+  async function initGoogleBasemaps(){
+    try {
+      mapStatus.setText('Mapa: conectando con Google…');
+      await loadGoogleMaps();
+
+      if (!L.gridLayer || !L.gridLayer.googleMutant) {
+        throw new Error('No se cargó el adaptador de Google Maps.');
+      }
+
+      const googleRoad = L.gridLayer.googleMutant({ type:'roadmap', maxZoom:21 });
+      const googleSatellite = L.gridLayer.googleMutant({ type:'hybrid', maxZoom:21 });
+      const googleTerrain = L.gridLayer.googleMutant({ type:'terrain', maxZoom:21 });
+
+      googleLayers = [googleRoad, googleSatellite, googleTerrain];
+
+      layerControl.addBaseLayer(googleRoad, 'Google Maps');
+      layerControl.addBaseLayer(googleSatellite, 'Google Satélite');
+      layerControl.addBaseLayer(googleTerrain, 'Google Relieve');
+
+      map.on('baselayerchange', event => {
+        mapStatus.setText(
+          'Mapa: ' + (event.name.startsWith('OpenStreetMap') ? 'OpenStreetMap · respaldo' : event.name)
+        );
+      });
+
+      if (map.hasLayer(osmFallback)) map.removeLayer(osmFallback);
+      googleRoad.addTo(map);
+      mapStatus.setText('Mapa: Google Maps');
+    } catch (error) {
+      useOsmFallback(error && error.message ? error.message : String(error));
+    }
+  }
 
   const railLayer = L.layerGroup().addTo(map);
   const crossingLayer = L.layerGroup();
   const interferenceLayer = L.layerGroup();
   const searchLayer = L.layerGroup().addTo(map);
+
+  initGoogleBasemaps();
 
   function escapeHtml(v){
     return String(v ?? '').replace(/[&<>"']/g, c => ({
@@ -285,8 +407,13 @@ window.startInfraApp = function startInfraApp() {
   function resultHtml(ramal, pk, pos){
     const crossing = nearestCruce(ramal,pk);
     const inter = nearestInterferences(ramal,pk);
+    const googleUrl = 'https://www.google.com/maps/search/?api=1&query=' +
+      encodeURIComponent(pos[0].toFixed(6) + ',' + pos[1].toFixed(6));
+
     let html = `<div class="result-block"><div class="result-title">Ramal ${escapeHtml(ramal)} · PK ${fmtPk(pk)}</div>
-      <div>Lat: ${pos[0].toFixed(6)} · Lon: ${pos[1].toFixed(6)}</div></div>`;
+      <div>Lat: ${pos[0].toFixed(6)} · Lon: ${pos[1].toFixed(6)}</div>
+      <a class="google-maps-button" href="${googleUrl}" target="_blank" rel="noopener noreferrer">Ver en Google Maps</a>
+    </div>`;
 
     html += '<div class="result-block"><div class="result-title">Cruces Habilitados</div>';
     if (!crossing) html += '<div>Sin registros para este ramal.</div>';
