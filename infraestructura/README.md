@@ -1,40 +1,28 @@
 # UP Salta · Infraestructura
 
-Aplicación paralela de trabajo para personal habilitado de Infraestructura.
+Aplicación paralela e independiente para personal habilitado de Infraestructura.
 
-## Alcance de v1
+## Alcance v1
 
-La aplicación contiene únicamente:
+Incluye únicamente:
 
-- mapa ferroviario de los ramales C, C13, C14, C15, C16 y C18;
-- localizador por Ramal + PK;
-- capa Cruces Habilitados;
-- capa Interferencias / Servicios;
-- ficha de consulta del punto seleccionado.
+- mapa ferroviario de C, C13, C14, C15, C16 y C18;
+- localizador Ramal + PK;
+- Cruces Habilitados;
+- Interferencias / Servicios;
+- ficha del punto seleccionado.
 
-## Aislamiento
+No carga ni enlaza Site Visión, Clima Alert, Site Bot, Seguridad, personal, descarrilos ni administración general.
 
-Esta aplicación no carga ni enlaza:
+## Acceso
 
-- Site Visión;
-- Clima Alert;
-- Site Bot;
-- módulos de Seguridad;
-- personal;
-- descarrilos;
-- administración general.
+La identidad usa Firebase Authentication con Google.
 
-Los datos necesarios se generan dentro de `infraestructura/data/` a partir de las fuentes vigentes del repositorio. El frontend de Infraestructura no necesita cargar `index.html`, `clima/`, Site Bot ni otros módulos en tiempo de ejecución.
-
-## Acceso independiente
-
-La identidad se valida mediante Firebase Authentication, pero la autorización es exclusiva de Infraestructura.
-
-Una cuenta solo ingresa si existe el documento:
+La autorización es exclusiva de esta herramienta mediante:
 
 `infraestructuraUsuarios/{uid}`
 
-con un contenido equivalente a:
+Documento esperado:
 
 ```json
 {
@@ -45,39 +33,80 @@ con un contenido equivalente a:
 }
 ```
 
-No existe registro público ni aprobación automática.
+No hay registro público ni aprobación automática.
 
-Autorizar una cuenta en `infraestructuraUsuarios` no la autoriza en Site Visión ni en Clima Alert. Esos módulos mantienen sus propios controles.
+La autorización de Infraestructura no otorga acceso a Site Visión ni a Clima Alert.
 
-## Firebase Hosting
+## Protección de datos
 
-La página utiliza `/__/firebase/init.js`, por lo que la publicación prevista para esta herramienta es un sitio Firebase Hosting propio dentro del proyecto, con URL independiente.
+Los datasets ferroviarios no se sirven como archivos estáticos del Hosting.
 
-Esto evita compartir la navegación o el origen web de Site Visión.
+El navegador autenticado solicita:
 
-## Regla Firestore requerida
+- `network`
+- `cruces`
+- `interferencias`
 
-El fragmento de `firestore.rules.fragment.txt` debe integrarse con las reglas existentes. No debe reemplazarlas en bloque.
+al endpoint `/infra-api`.
 
-## Fuente de datos
+La Cloud Function `infraestructuraData` verifica el Firebase ID Token y consulta server-side `infraestructuraUsuarios/{uid}` antes de devolver información.
+
+El cliente no lee Firestore directamente, por lo que esta aplicación no requiere ampliar las reglas Firestore existentes.
+
+## Datos
 
 `scripts/build-infraestructura-lite.py` genera:
 
-- `infraestructura/data/network-data.js`
-- `infraestructura/data/cruces-habilitados-data.js`
-- `infraestructura/data/interferencias-data.js`
+- `functions-infra/data/network.json`
+- `functions-infra/data/cruces.json`
+- `functions-infra/data/interferencias.json`
 
-La geometría se extrae de `NETWORK` del localizador actual. Cruces e interferencias se copian de sus fuentes operativas vigentes.
+Se validan 6 ramales, 269 cruces y 90 interferencias.
+
+## Hosting
+
+La publicación prevista es un sitio Firebase Hosting propio dentro del proyecto `up-salta-vision`.
+
+El template:
+
+`infraestructura/firebase.infraestructura.template.json`
+
+publica solo `infraestructura/` y reescribe `/infra-api` hacia la Cloud Function protegida.
+
+## Despliegue
+
+Desde Cloud Shell:
+
+```bash
+git switch feature/infraestructura-lite-v1
+git pull
+bash scripts/deploy-infraestructura-lite.sh
+```
+
+Por defecto intenta crear el Hosting:
+
+`up-salta-infraestructura`
+
+También puede indicarse otro Site ID:
+
+```bash
+bash scripts/deploy-infraestructura-lite.sh mi-site-id
+```
+
+## Habilitar un usuario
+
+La cuenta debe existir previamente en Firebase Authentication.
+
+Luego:
+
+```bash
+bash scripts/provision-infraestructura-user.sh correo@dominio.com "Nombre Apellido"
+```
+
+Este alta es administrativa y no modifica las autorizaciones de Site Visión o Clima Alert.
 
 ## Estado
 
-**Rama de desarrollo. No desplegar todavía.**
+Rama de desarrollo: `feature/infraestructura-lite-v1`.
 
-Pendientes antes de publicar:
-
-1. integrar y desplegar la regla de `infraestructuraUsuarios` sin alterar las reglas vigentes de Site Visión;
-2. crear al menos un usuario piloto autorizado;
-3. crear/configurar el sitio Firebase Hosting independiente;
-4. agregar el dominio final a Firebase Authentication > Authorized domains;
-5. ejecutar prueba positiva y prueba negativa de acceso;
-6. validar que no haya rutas o enlaces hacia Site Visión o Clima Alert.
+No fusionar a `main` hasta completar prueba positiva y negativa de acceso.
