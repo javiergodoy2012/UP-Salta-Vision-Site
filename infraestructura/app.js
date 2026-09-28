@@ -1,4 +1,4 @@
-(() => {
+window.startInfraApp = function startInfraApp() {
   'use strict';
 
   const RAMALES = ['C','C13','C14','C15','C16','C18'];
@@ -347,4 +347,4 @@
   pkInput.addEventListener('keydown',e => { if (e.key === 'Enter') buscar(); });
 
   drawRailways();
-})();
+};
