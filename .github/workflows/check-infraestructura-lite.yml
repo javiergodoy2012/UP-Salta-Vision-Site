@@ -1,0 +1,26 @@
+name: Check Infraestructura Lite
+
+on:
+  push:
+    branches:
+      - feature/infraestructura-lite-v1
+    paths:
+      - infraestructura/**
+      - scripts/build-infraestructura-lite.py
+      - .github/workflows/check-infraestructura-lite.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/build-infraestructura-lite.py
+      - run: node --check infraestructura/app.js
+      - run: node --check infraestructura/access.js
+      - run: test -s infraestructura/data/network-data.js
+      - run: test -s infraestructura/data/cruces-habilitados-data.js
+      - run: test -s infraestructura/data/interferencias-data.js
