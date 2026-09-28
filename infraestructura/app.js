@@ -152,9 +152,10 @@ window.startInfraApp = function startInfraApp() {
         );
       });
 
-      if (map.hasLayer(osmFallback)) map.removeLayer(osmFallback);
-      googleRoad.addTo(map);
-      mapStatus.setText('Mapa: Google Maps');
+      // No cambiar automáticamente el mapa base al cargar Google.
+      // OpenStreetMap · Respaldo queda visible y operativo desde el inicio.
+      // El usuario puede elegir Google Maps / Satélite / Relieve desde el selector.
+      mapStatus.setText('Mapa: OpenStreetMap · respaldo · Google disponible');
     } catch (error) {
       useOsmFallback(error && error.message ? error.message : String(error));
     }
@@ -483,4 +484,10 @@ window.startInfraApp = function startInfraApp() {
   pkInput.addEventListener('keydown',e => { if (e.key === 'Enter') buscar(); });
 
   drawRailways();
+
+  // Leaflet puede inicializarse inmediatamente después de quitar el atributo
+  // hidden del contenedor. Recalcular el tamaño evita un mapa en blanco.
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 120);
 };
