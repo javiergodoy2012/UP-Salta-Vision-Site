@@ -6,6 +6,7 @@ on:
       - feature/infraestructura-lite-v1
     paths:
       - infraestructura/**
+      - functions-infra/**
       - scripts/build-infraestructura-lite.py
       - .github/workflows/check-infraestructura-lite.yml
   workflow_dispatch:
@@ -18,9 +19,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 scripts/build-infraestructura-lite.py
-      - run: node --check infraestructura/app.js
-      - run: node --check infraestructura/access.js
-      - run: test -s infraestructura/data/network-data.js
-      - run: test -s infraestructura/data/cruces-habilitados-data.js
-      - run: test -s infraestructura/data/interferencias-data.js
+
+      - name: Generate protected datasets
+        run: python3 scripts/build-infraestructura-lite.py
+
+      - name: Check frontend syntax
+        run: |
+          node --check infraestructura/app.js
+          node --check infraestructura/access.js
+
+      - name: Check backend syntax
+        run: node --check functions-infra/index.js
+
+      - name: Check protected datasets
+        run: |
+          test -s functions-infra/data/network.json
+          test -s functions-infra/data/cruces.json
+          test -s functions-infra/data/interferencias.json
