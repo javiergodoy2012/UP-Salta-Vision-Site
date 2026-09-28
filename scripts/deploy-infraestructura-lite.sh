@@ -33,6 +33,29 @@ Path(sys.argv[2]).write_text(src, encoding="utf-8")
 PY
 
 GOOGLE_CONFIG="$ROOT/infraestructura/google-maps-config.js"
+GOOGLE_MUTANT="$ROOT/infraestructura/Leaflet.GoogleMutant.js"
+
+echo "Preparando adaptador Google Maps para Leaflet..."
+curl --fail --location --silent --show-error \
+  "https://cdn.jsdelivr.net/npm/leaflet.gridlayer.googlemutant@0.16.0/dist/Leaflet.GoogleMutant.js" \
+  --output "$GOOGLE_MUTANT"
+
+python3 - "$GOOGLE_MUTANT" <<'PY'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+src = path.read_text(encoding="utf-8")
+needle = "backgroundColor: 'transparent'"
+replacement = (
+    "backgroundColor: 'transparent',\n"
+    "\t\t\t\trenderingType: "
+    "(google.maps.RenderingType ? google.maps.RenderingType.RASTER : undefined)"
+)
+count = src.count(needle)
+if count != 1:
+    raise SystemExit(f"No se pudo preparar GoogleMutant: coincidencias={count}")
+path.write_text(src.replace(needle, replacement, 1), encoding="utf-8")
+PY
 
 if [[ -n "${GOOGLE_MAPS_API_KEY:-}" ]]; then
   python3 - "$GOOGLE_CONFIG" "$GOOGLE_MAPS_API_KEY" <<'PY'
