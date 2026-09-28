@@ -26,10 +26,19 @@ window.startInfraApp = function startInfraApp() {
   }
 
   const map = L.map('map', { zoomControl: true, preferCanvas: true }).setView([-24.7,-65.2], 7);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+
+  // Basemap servido por CARTO. Evita utilizar directamente los servidores
+  // comunitarios tile.openstreetmap.org, que bloquearon esta aplicación por
+  // su política de uso. Los datos cartográficos continúan atribuidos a OSM.
+  const baseMap = L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    {
+      subdomains: 'abcd',
+      maxZoom: 20,
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    }
+  );
+  baseMap.addTo(map);
 
   const railLayer = L.layerGroup().addTo(map);
   const crossingLayer = L.layerGroup();
