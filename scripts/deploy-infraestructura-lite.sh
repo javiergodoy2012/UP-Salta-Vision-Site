@@ -32,6 +32,31 @@ src = src.replace("REEMPLAZAR_POR_SITE_ID_INFRAESTRUCTURA", sys.argv[3])
 Path(sys.argv[2]).write_text(src, encoding="utf-8")
 PY
 
+GOOGLE_CONFIG="$ROOT/infraestructura/google-maps-config.js"
+
+if [[ -n "${GOOGLE_MAPS_API_KEY:-}" ]]; then
+  python3 - "$GOOGLE_CONFIG" "$GOOGLE_MAPS_API_KEY" <<'PY'
+from pathlib import Path
+import json, sys
+Path(sys.argv[1]).write_text(
+    "window.VISION_GOOGLE_MAPS_API_KEY = " + json.dumps(sys.argv[2]) + ";\n",
+    encoding="utf-8",
+)
+PY
+  echo "Google Maps: configuración tomada de GOOGLE_MAPS_API_KEY."
+else
+  echo "Google Maps: intentando reutilizar la configuración pública de VisionSite..."
+  if curl --fail --location --silent --show-error \
+      "https://upsaltavision.com.ar/google-maps-config.js" \
+      --output "$GOOGLE_CONFIG"; then
+    echo "Google Maps: configuración de VisionSite copiada."
+  else
+    echo "ADVERTENCIA: no se pudo recuperar la configuración de Google Maps."
+    echo "Se publicará OpenStreetMap como respaldo."
+    printf "window.VISION_GOOGLE_MAPS_API_KEY = '';\n" > "$GOOGLE_CONFIG"
+  fi
+fi
+
 echo "Regenerando datasets protegidos..."
 python3 scripts/build-infraestructura-lite.py
 
