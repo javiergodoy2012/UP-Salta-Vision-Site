@@ -165,3 +165,18 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
   #map .leaflet-control-layers-expanded{padding:7px}
   #map .leaflet-control-layers label > span{min-height:30px;padding:4px 7px}
 }
+
+
+.division-title{
+  margin-top:2px;
+  margin-bottom:7px;
+  color:#d8e8f7;
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:.04em;
+}
+.access-card .division-title{
+  font-size:14px;
+  margin-top:-2px;
+  margin-bottom:10px;
+}
