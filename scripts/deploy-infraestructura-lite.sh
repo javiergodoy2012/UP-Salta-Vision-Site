@@ -45,15 +45,15 @@ from pathlib import Path
 import sys
 path = Path(sys.argv[1])
 src = path.read_text(encoding="utf-8")
-needle = "backgroundColor: 'transparent'"
+needles = ('backgroundColor: "transparent",', "backgroundColor: 'transparent',")
+matches = [needle for needle in needles if src.count(needle) == 1]
+if len(matches) != 1:
+    raise SystemExit("No se pudo preparar GoogleMutant: backgroundColor no es único")
+needle = matches[0]
 replacement = (
-    "backgroundColor: 'transparent',\n"
-    "\t\t\t\trenderingType: "
-    "(google.maps.RenderingType ? google.maps.RenderingType.RASTER : undefined)"
+    needle + "\n\t\t\t\trenderingType: "
+    "(google.maps.RenderingType ? google.maps.RenderingType.RASTER : undefined),"
 )
-count = src.count(needle)
-if count != 1:
-    raise SystemExit(f"No se pudo preparar GoogleMutant: coincidencias={count}")
 path.write_text(src.replace(needle, replacement, 1), encoding="utf-8")
 PY
 
