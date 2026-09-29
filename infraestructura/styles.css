@@ -25,7 +25,7 @@ body{overflow:hidden}
 .panel{background:linear-gradient(180deg,#0d1d2d,#091522);border-right:1px solid var(--border);padding:22px 18px 14px;overflow:auto}
 .brand{padding:16px 6px 22px}
 .brand-kicker{font-size:12px;font-weight:800;letter-spacing:.18em;color:#73b7ff}
-.brand h1{font-size:30px;margin:4px 0 6px}
+.brand h1{font-size:26px;margin:4px 0 6px;line-height:1.08;white-space:nowrap;letter-spacing:-.02em}
 .brand p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 10px 24px #0002}
 .card h2{font-size:14px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 14px;color:#d7e8f7}
@@ -242,9 +242,11 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
   .brand .brand-kicker{grid-area:kicker}
   .brand h1{
     grid-area:title;
-    font-size:24px;
+    font-size:20px;
     margin:1px 0 0;
     line-height:1.05;
+    white-space:nowrap;
+    letter-spacing:-.02em;
   }
   .brand .division-title{
     grid-area:division;
@@ -341,7 +343,7 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
     width:110px;
     height:auto;
   }
-  .brand h1{font-size:22px}
+  .brand h1{font-size:18px}
   .panel{padding-left:10px;padding-right:10px}
   .card{padding:12px}
   .map-wrap{height:58vh;min-height:360px}
