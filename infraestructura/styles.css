@@ -188,19 +188,19 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
   filter:drop-shadow(0 8px 18px rgba(0,0,0,.28));
 }
 .infra-logo-access{
-  width:min(220px,100%);
+  width:min(280px,100%);
   height:auto;
   margin:0 auto 10px;
 }
 .infra-logo-panel{
-  width:154px;
+  width:190px;
   height:auto;
   margin:0 0 10px;
 }
 @media(max-width:780px){
   .access-gate{overflow:auto;place-items:safe center;padding:14px}
   .access-card{padding:20px}
-  .infra-logo-access{width:min(160px,100%)}
+  .infra-logo-access{width:min(190px,100%)}
 }
 
 
@@ -223,7 +223,7 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
   }
   .brand{
     display:grid;
-    grid-template-columns:110px 1fr;
+    grid-template-columns:122px 1fr;
     grid-template-areas:
       "logo kicker"
       "logo title"
@@ -235,7 +235,7 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
   }
   .infra-logo-panel{
     grid-area:logo;
-    width:108px;
+    width:120px;
     height:auto;
     margin:0;
   }
@@ -326,7 +326,7 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
     border-radius:16px;
   }
   .infra-logo-access{
-    width:150px;
+    width:175px;
     height:auto;
     margin-bottom:8px;
   }
@@ -334,11 +334,11 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
   .access-card .division-title{font-size:13px}
   .app-shell{min-width:0}
   .brand{
-    grid-template-columns:100px 1fr;
+    grid-template-columns:112px 1fr;
     column-gap:10px;
   }
   .infra-logo-panel{
-    width:98px;
+    width:110px;
     height:auto;
   }
   .brand h1{font-size:22px}
