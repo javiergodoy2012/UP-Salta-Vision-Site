@@ -180,3 +180,23 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
   margin-top:-2px;
   margin-bottom:10px;
 }
+
+
+.infra-logo{
+  display:block;
+  object-fit:contain;
+  filter:drop-shadow(0 8px 18px rgba(0,0,0,.28));
+}
+.infra-logo-access{
+  width:96px;
+  height:96px;
+  margin:0 auto 10px;
+}
+.infra-logo-panel{
+  width:78px;
+  height:78px;
+  margin:0 0 10px;
+}
+@media(max-width:780px){
+  .infra-logo-panel{width:70px;height:70px}
+}
