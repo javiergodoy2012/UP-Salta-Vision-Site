@@ -200,3 +200,150 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
 @media(max-width:780px){
   .infra-logo-panel{width:70px;height:70px}
 }
+
+
+/* Parche responsive Infraestructura Lite v1 */
+@media(max-width:780px){
+  html,body{height:auto;min-height:100%;overflow-x:hidden}
+  body{overflow-y:auto}
+  .app-shell{
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    height:auto;
+  }
+  .panel{
+    width:100%;
+    padding:14px 12px 10px;
+    border-right:0;
+    border-bottom:1px solid var(--border);
+    overflow:visible;
+  }
+  .brand{
+    display:grid;
+    grid-template-columns:76px 1fr;
+    grid-template-areas:
+      "logo kicker"
+      "logo title"
+      "logo division"
+      "copy copy";
+    column-gap:12px;
+    align-items:center;
+    padding:8px 2px 14px;
+  }
+  .infra-logo-panel{
+    grid-area:logo;
+    width:72px;
+    height:72px;
+    margin:0;
+  }
+  .brand .brand-kicker{grid-area:kicker}
+  .brand h1{
+    grid-area:title;
+    font-size:24px;
+    margin:1px 0 0;
+    line-height:1.05;
+  }
+  .brand .division-title{
+    grid-area:division;
+    margin:2px 0 0;
+    font-size:12px;
+  }
+  .brand p{
+    grid-area:copy;
+    margin-top:10px;
+    font-size:12px;
+  }
+  .card{
+    border-radius:12px;
+    padding:14px;
+    margin-bottom:10px;
+  }
+  .card h2{font-size:13px;margin-bottom:10px}
+  select,input,button{
+    min-height:44px;
+    font-size:16px;
+  }
+  .check{min-height:32px}
+  .map-wrap{
+    width:100%;
+    height:62vh;
+    min-height:420px;
+  }
+  #map{height:100%;min-height:420px}
+  .legend{
+    left:10px;
+    right:10px;
+    bottom:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:8px 12px;
+    font-size:10px;
+    padding:7px 9px;
+  }
+  .user-chip{
+    position:sticky;
+    top:0;
+    left:auto;
+    right:auto;
+    width:100%;
+    border-radius:0;
+    justify-content:space-between;
+    padding:7px 12px;
+    background:#08131ff5;
+    z-index:1900;
+  }
+  .user-chip button{
+    min-height:34px;
+    margin:0;
+    padding:5px 10px;
+  }
+  #map .leaflet-control-layers{
+    max-width:calc(100vw - 24px);
+    min-width:0;
+  }
+  #map .leaflet-control-layers-expanded{
+    max-height:55vh;
+    overflow:auto;
+  }
+  .infra-map-status{
+    max-width:60vw;
+    white-space:normal;
+  }
+  footer{
+    text-align:center;
+    padding-bottom:10px;
+  }
+}
+
+@media(max-width:430px){
+  .access-gate{padding:12px}
+  .access-card{
+    width:100%;
+    padding:20px 16px;
+    border-radius:16px;
+  }
+  .infra-logo-access{
+    width:88px;
+    height:88px;
+    margin-bottom:8px;
+  }
+  .access-card h1{font-size:28px}
+  .access-card .division-title{font-size:13px}
+  .app-shell{min-width:0}
+  .brand{
+    grid-template-columns:64px 1fr;
+    column-gap:10px;
+  }
+  .infra-logo-panel{
+    width:62px;
+    height:62px;
+  }
+  .brand h1{font-size:22px}
+  .panel{padding-left:10px;padding-right:10px}
+  .card{padding:12px}
+  .map-wrap{height:58vh;min-height:360px}
+  #map{min-height:360px}
+  #map .leaflet-control-zoom{margin-top:10px;margin-left:10px}
+  #map .leaflet-control-layers{margin-left:10px}
+}
