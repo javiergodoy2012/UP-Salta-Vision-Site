@@ -21,7 +21,7 @@ body{overflow:hidden}
 .access-footnote{color:#7790a3;font-size:11px;line-height:1.5;margin:20px 0 0}
 .user-chip{position:fixed;z-index:1800;right:14px;top:14px;display:flex;align-items:center;gap:9px;background:#08131fe8;border:1px solid #31516a;border-radius:999px;padding:6px 7px 6px 12px;box-shadow:0 4px 16px #0006;font-size:11px;color:#c7d8e6}
 .user-chip button{width:auto;margin:0;padding:6px 10px;border-radius:999px;background:#153149;font-size:11px}
-.app-shell{display:grid;grid-template-columns:340px 1fr;height:100vh}
+.app-shell{display:grid;grid-template-columns:408px minmax(0,1fr);height:100vh}
 .panel{background:linear-gradient(180deg,#0d1d2d,#091522);border-right:1px solid var(--border);padding:22px 18px 14px;overflow:auto}
 .brand{padding:16px 6px 22px}
 .brand-kicker{font-size:12px;font-weight:800;letter-spacing:.18em;color:#73b7ff}
@@ -195,7 +195,7 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
 .infra-logo-panel{
   width:190px;
   height:auto;
-  margin:0 0 10px;
+  margin:0 auto 10px;
 }
 @media(max-width:780px){
   .access-gate{overflow:auto;place-items:safe center;padding:14px}
