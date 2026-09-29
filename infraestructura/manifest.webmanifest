@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "UP Salta Visión · Infraestructura Beta",
+  "short_name": "Infra Beta",
+  "description": "Localizador ferroviario, cruces habilitados e interferencias de UP Salta. Versión beta instalable.",
+  "lang": "es-AR",
+  "start_url": "./?modo=beta",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#08131f",
+  "theme_color": "#08131f",
+  "icons": [
+    {
+      "src": "./icon-infra-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-infra-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

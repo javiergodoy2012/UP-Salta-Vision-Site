@@ -134,3 +134,25 @@ La clave de Google Maps debe admitir como HTTP referrers:
 - `https://up-salta-infraestructura.firebaseapp.com/*`
 
 Si Google Maps no está autorizado o no responde, la herramienta activa automáticamente OpenStreetMap · Respaldo.
+
+
+## Beta instalable
+
+El manifiesto `manifest.webmanifest` permite instalar «Infra Beta» y abrirla
+con `display: standalone`. Reutiliza el mismo sitio y las autorizaciones
+actuales. La versión en una pestaña sigue disponible.
+
+No incorpora service worker ni funcionamiento sin conexión. Requiere Internet
+para acceder, cargar los datos protegidos y consultar el mapa.
+
+Después de publicar Hosting, probar en Chrome Android:
+
+1. Abrir el sitio y usar el menú de Chrome → Instalar aplicación / Agregar a la pantalla principal (el texto depende del navegador).
+2. Abrir «Infra Beta» desde el ícono instalado y comprobar que no aparece la barra de direcciones.
+3. Ingresar con Google: una cuenta habilitada debe cargar mapa y capas; una nueva debe quedar pendiente.
+4. Probar búsqueda, desplazamiento del mapa, capas, rotación del teléfono y cierre/reapertura.
+5. Cerrar sesión y verificar que se vuelve a solicitar el acceso.
+
+La instalación y el regreso desde Google requieren validación en un teléfono
+real después de publicar; la validación estática no confirma esos recorridos.
+Desinstalar «Infra Beta» no elimina la cuenta ni su autorización.
