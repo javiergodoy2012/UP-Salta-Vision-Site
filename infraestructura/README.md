@@ -37,7 +37,12 @@ Documento esperado:
 }
 ```
 
-No hay registro público ni aprobación automática.
+El primer ingreso con Google crea automáticamente una solicitud en
+`infraestructuraUsuarios/{uid}` con `activo: false`, el correo verificado,
+nombre y fecha de solicitud. La persona queda pendiente sin acceso a los datos.
+El administrador habilita su documento en Firebase Firestore cambiando
+`activo` a `true`; la persona pulsa «Reintentar» o vuelve a ingresar.
+No hay aprobación automática.
 
 La autorización de Infraestructura no otorga acceso a Site Visión ni a Clima Alert.
 

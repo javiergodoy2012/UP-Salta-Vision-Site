@@ -77,6 +77,17 @@
     return profile;
   }
 
+  async function registerPending(user) {
+    const token = await user.getIdToken();
+    const response = await fetch('/infra-api?part=register', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' },
+      cache: 'no-store',
+      credentials: 'same-origin'
+    });
+    if (!response.ok) throw new Error('REGISTER_' + response.status);
+  }
+
   async function evaluate(user) {
     currentUser = user || null;
     locked();
@@ -104,7 +115,15 @@
       console.error('[Infraestructura] acceso', error);
 
       if (error && error.code === 'NOT_AUTHORIZED') {
-        message((user.email || 'Esta cuenta') + ' no está habilitada para esta herramienta.', 'denied');
+        try {
+          await registerPending(user);
+          message('Solicitud registrada para ' + (user.email || 'esta cuenta') + '. Pendiente de habilitación por Infraestructura.');
+          retry.hidden = false;
+        } catch (registrationError) {
+          console.error('[Infraestructura] registro', registrationError);
+          message('No se pudo registrar la solicitud. Reintentá más tarde.', 'denied');
+          retry.hidden = false;
+        }
         login.textContent = 'Usar otra cuenta';
         login.hidden = false;
       } else {

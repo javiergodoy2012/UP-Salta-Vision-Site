@@ -5,7 +5,7 @@ const path = require('node:path');
 const { onRequest } = require('firebase-functions/v2/https');
 const { initializeApp } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 
 initializeApp();
 
@@ -59,6 +59,43 @@ exports.infraestructuraData = onRequest(
   async (req, res) => {
     res.set('Cache-Control', 'private, no-store, max-age=0');
     res.set('X-Content-Type-Options', 'nosniff');
+
+    if (req.method === 'POST' && req.query.part === 'register') {
+      const match = String(req.get('authorization') || '').match(/^Bearer\s+(.+)$/i);
+      if (!match) {
+        res.status(401).json({ error: 'unauthenticated' });
+        return;
+      }
+      let decoded;
+      try {
+        decoded = await auth.verifyIdToken(match[1]);
+      } catch (error) {
+        res.status(401).json({ error: 'unauthenticated' });
+        return;
+      }
+      if (!decoded.email || decoded.email_verified !== true) {
+        res.status(403).json({ error: 'verified-email-required' });
+        return;
+      }
+      try {
+        const doc = db.collection('infraestructuraUsuarios').doc(decoded.uid);
+        await db.runTransaction(async transaction => {
+          if ((await transaction.get(doc)).exists) return;
+          transaction.create(doc, {
+            activo: false,
+            rol: 'infraestructura',
+            email: decoded.email,
+            nombre: decoded.name || '',
+            solicitadoEn: FieldValue.serverTimestamp()
+          });
+        });
+        res.status(202).json({ estado: 'pendiente' });
+      } catch (error) {
+        console.error('infraestructura registration error', error);
+        res.status(500).json({ error: 'registration-failed' });
+      }
+      return;
+    }
 
     if (req.method !== 'GET') {
       res.status(405).json({ error: 'method-not-allowed' });
