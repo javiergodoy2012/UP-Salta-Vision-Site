@@ -188,17 +188,19 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
   filter:drop-shadow(0 8px 18px rgba(0,0,0,.28));
 }
 .infra-logo-access{
-  width:96px;
-  height:96px;
+  width:min(220px,100%);
+  height:auto;
   margin:0 auto 10px;
 }
 .infra-logo-panel{
-  width:78px;
-  height:78px;
+  width:154px;
+  height:auto;
   margin:0 0 10px;
 }
 @media(max-width:780px){
-  .infra-logo-panel{width:70px;height:70px}
+  .access-gate{overflow:auto;place-items:safe center;padding:14px}
+  .access-card{padding:20px}
+  .infra-logo-access{width:min(160px,100%)}
 }
 
 
@@ -221,7 +223,7 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
   }
   .brand{
     display:grid;
-    grid-template-columns:76px 1fr;
+    grid-template-columns:110px 1fr;
     grid-template-areas:
       "logo kicker"
       "logo title"
@@ -233,8 +235,8 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
   }
   .infra-logo-panel{
     grid-area:logo;
-    width:72px;
-    height:72px;
+    width:108px;
+    height:auto;
     margin:0;
   }
   .brand .brand-kicker{grid-area:kicker}
@@ -324,20 +326,20 @@ footer{font-size:11px;color:#6f879a;padding:8px 5px 30px}
     border-radius:16px;
   }
   .infra-logo-access{
-    width:88px;
-    height:88px;
+    width:150px;
+    height:auto;
     margin-bottom:8px;
   }
   .access-card h1{font-size:28px}
   .access-card .division-title{font-size:13px}
   .app-shell{min-width:0}
   .brand{
-    grid-template-columns:64px 1fr;
+    grid-template-columns:100px 1fr;
     column-gap:10px;
   }
   .infra-logo-panel{
-    width:62px;
-    height:62px;
+    width:98px;
+    height:auto;
   }
   .brand h1{font-size:22px}
   .panel{padding-left:10px;padding-right:10px}
