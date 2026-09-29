@@ -92,5 +92,6 @@ firebase deploy   --project "$PROJECT_ID"   --config "$CONFIG"   --only function
 echo
 echo "Despliegue finalizado."
 echo "URL esperada: https://$SITE_ID.web.app"
-echo "Antes de probar, autorizá al menos un usuario con:"
-echo "  bash scripts/provision-infraestructura-user.sh correo@dominio.com"
+echo "Para solicitar acceso, ingresá con Google en el sitio."
+echo "La cuenta aparecerá en Firestore > infraestructuraUsuarios con activo=false."
+echo "Habilitala cambiando activo a true en el documento del usuario."
