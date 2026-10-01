@@ -12,10 +12,6 @@
  *   node backfill-precipitacion-historica.js --days=31 --write
  */
 
-const admin = require('firebase-admin');
-if (!admin.apps.length) admin.initializeApp();
-const db = admin.firestore();
-
 const TZ='America/Argentina/Salta';
 const COLLECTION='precipitacionesDiarias';
 
@@ -87,6 +83,19 @@ async function fetchRange(loc,start,end){
 
 async function main(){
   const write=has('write');
+
+  let db=null;
+  let serverTimestamp=null;
+
+  // En DRY RUN no se carga firebase-admin: la validación meteorológica
+  // puede ejecutarse sin dependencias de Firestore.
+  if(write){
+    const { getApps, initializeApp } = require('firebase-admin/app');
+    const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+    if(!getApps().length) initializeApp();
+    db=getFirestore();
+    serverTimestamp=FieldValue.serverTimestamp;
+  }
   const days=Math.max(1,Math.min(365,Number(arg('days','31'))||31));
   const today=isoInTZ();
   const end=shift(today,-1);
@@ -114,7 +123,7 @@ async function main(){
             fuente:'open-meteo',
             tipo:'historico_modelado',
             estado:'consolidado',
-            actualizado:admin.firestore.FieldValue.serverTimestamp(),
+            actualizado:serverTimestamp(),
             backfill:true
           },{merge:true});
           count++;
