@@ -767,6 +767,7 @@ body.modal-open{overflow:hidden;}
       <select class="refresh-select" id="rain-v5-ramal"><option value="all">Todos los ramales</option></select>
       <select class="refresh-select" id="rain-v5-localidad"></select>
       <button class="btn btn-ghost btn-sm" id="rain-v5-refresh" type="button">Actualizar</button>
+      <button class="btn btn-ghost btn-sm" id="rain-month-open" type="button">📊 Estadística mensual</button>
       <span class="rain-v5-mode sim" id="rain-v5-mode">CARGANDO</span>
     </div>
 
@@ -795,6 +796,47 @@ body.modal-open{overflow:hidden;}
         <div class="rain-v5-separation"><b>Histórico consolidado/modelado:</b> estos acumulados no incorporan la precipitación pronosticada del reporte meteorológico.</div>
       </div>
     </div>
+
+    <section class="rain-month-section" id="rain-month-section" hidden>
+      <div class="rain-month-head">
+        <div>
+          <h3 id="rain-month-title">Cuadro mensual de estadísticas</h3>
+          <p>Se habilita para meses cerrados y utiliza exclusivamente registros históricos consolidados/modelados de Firestore.</p>
+        </div>
+        <div class="rain-month-actions">
+          <select class="refresh-select" id="rain-month-select"></select>
+          <button class="btn btn-ghost btn-sm" id="rain-month-refresh" type="button">Actualizar cuadro</button>
+          <span class="rain-v5-mode real" id="rain-month-mode">MES CERRADO</span>
+        </div>
+      </div>
+
+      <div class="rain-v5-cards rain-month-cards">
+        <div class="rain-v5-card"><div class="rain-v5-label">Mayor acumulado mensual</div><div class="rain-v5-value" id="rain-month-max">—</div><div class="rain-v5-note" id="rain-month-max-note">—</div></div>
+        <div class="rain-v5-card"><div class="rain-v5-label">Promedio por localidad</div><div class="rain-v5-value" id="rain-month-avg">—</div><div class="rain-v5-note">Mes completo seleccionado</div></div>
+        <div class="rain-v5-card"><div class="rain-v5-label">Máximo diario</div><div class="rain-v5-value" id="rain-month-daily-max">—</div><div class="rain-v5-note" id="rain-month-daily-note">—</div></div>
+        <div class="rain-v5-card"><div class="rain-v5-label">Cobertura completa</div><div class="rain-v5-value" id="rain-month-coverage">—</div><div class="rain-v5-note">Localidades con todos los días del mes</div></div>
+      </div>
+
+      <div class="rain-v5-grid">
+        <div class="rain-v5-panel">
+          <h3>Ranking mensual por localidad</h3>
+          <p>Top 10 por acumulado total del mes cerrado.</p>
+          <div class="rain-v5-rank" id="rain-month-ranking"></div>
+        </div>
+        <div class="rain-v5-panel">
+          <h3>Acumulado por ramal</h3>
+          <p>Perico se integra en C y C15; Metán se integra en C.</p>
+          <div class="rain-v5-rank" id="rain-month-ramales"></div>
+        </div>
+      </div>
+
+      <div class="rain-v5-panel">
+        <h3>Evolución diaria del mes</h3>
+        <p>Promedio diario de precipitación entre las localidades con datos para cada fecha.</p>
+        <div class="rain-month-daily-chart" id="rain-month-daily"></div>
+        <div class="rain-v5-separation" id="rain-month-note">—</div>
+      </div>
+    </section>
 
     <div class="rain-v5-panel">
       <h3>Histórico diario</h3>
@@ -3226,6 +3268,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.ge
 <script src="acumulados/precipitacion-historica.js"></script>
 <script src="acumulados/diagnostico-firestore.js"></script>
 <script src="acumulados/acumulados-ui.js"></script>
+<script src="acumulados/estadisticas-mensuales.js"></script>
 <script>
 (function initContactsAccess(){
   const status=document.getElementById('contacts-access-status');
