@@ -838,16 +838,18 @@ body.modal-open{overflow:hidden;}
       </div>
     </section>
 
-    <div class="rain-v5-panel">
-      <h3>Histórico diario</h3>
-      <p>Documentos de <code>precipitacionesDiarias</code> para la localidad seleccionada.</p>
-      <div class="rain-v5-table-wrap">
-        <table class="rain-v5-table">
-          <thead><tr><th>Fecha</th><th>Localidad</th><th>Ramal</th><th>Precipitación</th><th>Fuente</th><th>Estado</th></tr></thead>
-          <tbody id="rain-v5-body"><tr><td colspan="6" class="rain-v5-empty">Cargando histórico…</td></tr></tbody>
-        </table>
+    <details class="rain-v5-panel rain-history-details">
+      <summary>Histórico diario · consulta</summary>
+      <div class="rain-history-details-body">
+        <p>Documentos de <code>precipitacionesDiarias</code> para la localidad seleccionada.</p>
+        <div class="rain-v5-table-wrap">
+          <table class="rain-v5-table">
+            <thead><tr><th>Fecha</th><th>Localidad</th><th>Ramal</th><th>Precipitación</th><th>Fuente</th><th>Estado</th></tr></thead>
+            <tbody id="rain-v5-body"><tr><td colspan="6" class="rain-v5-empty">Cargando histórico…</td></tr></tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </details>
   </div>
 </div>
 
