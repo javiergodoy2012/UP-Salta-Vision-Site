@@ -756,14 +756,14 @@ body.modal-open{overflow:hidden;}
   <div class="rain-v5-shell">
     <div>
       <div style="font-size:18px;font-weight:700;">Acumulados de precipitación</div>
-      <div style="font-size:12px;color:var(--ink3);margin-top:3px;">Histórico consolidado/modelado por localidad y ramal · último día completo, 72 h, 7 días y mes en curso.</div>
+      <div style="font-size:12px;color:var(--ink3);margin-top:3px;">Histórico consolidado/modelado por localidad y ramal · último día completo, 72 h, 7 días y últimos 31 días.</div>
     </div>
 
     <div class="rain-v5-toolbar">
       <button class="btn btn-ghost btn-sm rain-v5-period" data-rain-period="24" type="button">Último día</button>
       <button class="btn btn-ghost btn-sm rain-v5-period" data-rain-period="72" type="button">72 h</button>
       <button class="btn btn-ghost btn-sm rain-v5-period active" data-rain-period="168" type="button">7 días</button>
-      <button class="btn btn-ghost btn-sm rain-v5-period" data-rain-period="month" type="button">Mes en curso</button>
+      <button class="btn btn-ghost btn-sm rain-v5-period" data-rain-period="31" type="button">Últimos 31 días</button>
       <select class="refresh-select" id="rain-v5-ramal"><option value="all">Todos los ramales</option></select>
       <select class="refresh-select" id="rain-v5-localidad"></select>
       <button class="btn btn-ghost btn-sm" id="rain-v5-refresh" type="button">Actualizar</button>
@@ -790,7 +790,7 @@ body.modal-open{overflow:hidden;}
           <div class="rain-v5-metric"><span>24 h</span><strong id="rain-v5-24">—</strong></div>
           <div class="rain-v5-metric"><span>72 h</span><strong id="rain-v5-72">—</strong></div>
           <div class="rain-v5-metric"><span>7 días</span><strong id="rain-v5-7">—</strong></div>
-          <div class="rain-v5-metric"><span>Mes actual</span><strong id="rain-v5-month">—</strong></div>
+          <div class="rain-v5-metric"><span>Últimos 31 días</span><strong id="rain-v5-month">—</strong></div>
         </div>
         <div class="rain-v5-separation"><b>Histórico consolidado/modelado:</b> estos acumulados no incorporan la precipitación pronosticada del reporte meteorológico.</div>
       </div>
