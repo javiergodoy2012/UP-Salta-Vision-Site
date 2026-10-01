@@ -8,7 +8,14 @@ function q(id){return document.getElementById(id)}
 function mm(v){return Number(v||0).toFixed(1).replace('.',',')+' mm'}
 function today(){return global.ClimaRainHistory?.isoDateInTZ?.() || new Intl.DateTimeFormat('en-CA',{timeZone:REF_TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
 function periodValue(row){return state.period==='24'?row.h24:state.period==='72'?row.h72:state.period==='31'?row.d31:state.period==='month'?row.mes:row.d7}
-function visibleRows(){return (state.summary?.localidades||[]).filter(r=>state.ramal==='all'||r.ramal===state.ramal)}
+function matchesRamal(rowRamal, selected){
+  if(selected==='all') return true;
+  // Perico pertenece operativamente a ambos ramales. Se evita exponer
+  // "C / C15" como filtro independiente y se lo incluye en C y C15.
+  if(rowRamal==='C / C15') return selected==='C' || selected==='C15';
+  return rowRamal===selected;
+}
+function visibleRows(){return (state.summary?.localidades||[]).filter(r=>matchesRamal(r.ramal,state.ramal))}
 function setMode(kind,label){const el=q('rain-v5-mode');if(!el)return;el.className='rain-v5-mode '+kind;el.textContent=label}
 function setLoading(on){state.loading=on;const b=q('rain-v5-refresh');if(b){b.disabled=on;b.textContent=on?'Actualizando…':'Actualizar'}}
 
@@ -34,7 +41,8 @@ function rebuildFilters(){
  const rows=state.summary?.localidades||[], ramal=q('rain-v5-ramal'), loc=q('rain-v5-localidad');
  if(!ramal||!loc)return;
  const oldR=state.ramal, oldL=state.selectedId;
- ramal.innerHTML='<option value="all">Todos los ramales</option>'+[...new Set(rows.map(r=>r.ramal).filter(Boolean))].sort().map(r=>'<option>'+r+'</option>').join('');
+ const ramales=[...new Set(rows.map(r=>r.ramal).filter(Boolean).filter(r=>r!=='C / C15'))].sort();
+ ramal.innerHTML='<option value="all">Todos los ramales</option>'+ramales.map(r=>'<option>'+r+'</option>').join('');
  state.ramal=[...ramal.options].some(o=>o.value===oldR)?oldR:'all';ramal.value=state.ramal;
  loc.innerHTML=rows.map(r=>'<option value="'+r.localidadId+'">'+r.localidad+' · '+r.ramal+'</option>').join('');
  state.selectedId=rows.some(r=>r.localidadId===oldL)?oldL:(rows[0]?.localidadId||'');loc.value=state.selectedId;
