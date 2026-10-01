@@ -44,8 +44,8 @@
       fecha: data.fecha || '',
       precipitacionMm: Number(data.precipitacionMm || 0),
       fuente: data.fuente || 'open-meteo',
-      tipo: data.tipo || 'observado',
-      estado: data.estado || 'confirmado'
+      tipo: data.tipo || 'historico_modelado',
+      estado: data.estado || 'consolidado'
     };
   }
 
@@ -62,7 +62,7 @@
 
     const data = snap.docs
       .map(normalize)
-      .filter(r=>r.tipo==='observado')
+      .filter(r=>r.tipo==='historico_modelado' || r.tipo==='observado')
       .sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.localidad.localeCompare(b.localidad));
 
     cache.set(key,{at:Date.now(),data});
