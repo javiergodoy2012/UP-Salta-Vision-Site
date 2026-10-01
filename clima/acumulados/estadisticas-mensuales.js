@@ -96,6 +96,8 @@ async function render(force=false){
     if(mode) mode.textContent='MES CERRADO · FIRESTORE';
 
     q('rain-month-title').textContent='Cuadro mensual · '+current.label;
+    const periodEl=q('rain-month-period');
+    if(periodEl) periodEl.textContent=current.desde.split('-').reverse().join('/')+' → '+current.hasta.split('-').reverse().join('/')+' · '+current.dias+' días consolidados';
     q('rain-month-max').textContent=current.maxLoc?mm(current.maxLoc.total):'—';
     q('rain-month-max-note').textContent=current.maxLoc?(current.maxLoc.localidad+' · '+current.maxLoc.ramal):'—';
     q('rain-month-avg').textContent=mm(current.promedio);
@@ -116,10 +118,14 @@ async function render(force=false){
     }).join('') || '<div class="rain-v5-empty">Sin datos por ramal.</div>';
 
     const maxDay=Math.max(...current.serie.map(x=>x.promedio),0);
+    const destacados=[...current.serie].sort((a,b)=>b.promedio-a.promedio).slice(0,2).map(x=>x.fecha);
     q('rain-month-daily').innerHTML=current.serie.map(x=>{
-      const h=maxDay?Math.max(3,x.promedio/maxDay*100):3;
+      const h=maxDay?Math.max(4,x.promedio/maxDay*100):4;
       const day=x.fecha.slice(-2);
-      return '<div class="rain-month-day" title="'+x.fecha+' · '+mm(x.promedio)+' promedio"><div class="rain-month-daybar" style="height:'+h+'%"></div><span>'+day+'</span></div>';
+      const peak=destacados.includes(x.fecha)&&x.promedio>0;
+      return '<div class="rain-month-day'+(peak?' is-peak':'')+'" title="'+x.fecha+' · '+mm(x.promedio)+' promedio">'+
+        (peak?'<strong class="rain-month-dayvalue">'+mm(x.promedio)+'</strong>':'')+
+        '<div class="rain-month-daybar" style="height:'+h+'%"></div><span>'+day+'</span></div>';
     }).join('');
 
     q('rain-month-note').textContent=current.completas===23
