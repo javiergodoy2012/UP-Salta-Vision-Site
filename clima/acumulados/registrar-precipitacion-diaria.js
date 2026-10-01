@@ -98,8 +98,8 @@ exports.registrarPrecipitacionDiaria = onSchedule(
           fecha,
           precipitacionMm,
           fuente: "open-meteo",
-          tipo: "observado",
-          estado: "confirmado",
+          tipo: "historico_modelado",
+          estado: "consolidado",
           actualizado: FieldValue.serverTimestamp()
         }, { merge: true });
 
