@@ -10,9 +10,10 @@ function today(){return global.ClimaRainHistory?.isoDateInTZ?.() || new Intl.Dat
 function periodValue(row){return state.period==='24'?row.h24:state.period==='72'?row.h72:state.period==='31'?row.d31:state.period==='month'?row.mes:row.d7}
 function matchesRamal(rowRamal, selected){
   if(selected==='all') return true;
-  // Perico pertenece operativamente a ambos ramales. Se evita exponer
-  // "C / C15" como filtro independiente y se lo incluye en C y C15.
+  // Perico pertenece operativamente a C y C15.
   if(rowRamal==='C / C15') return selected==='C' || selected==='C15';
+  // Metán queda integrado en la búsqueda del Ramal C.
+  if(rowRamal==='C / C12') return selected==='C';
   return rowRamal===selected;
 }
 function visibleRows(){return (state.summary?.localidades||[]).filter(r=>matchesRamal(r.ramal,state.ramal))}
@@ -41,7 +42,7 @@ function rebuildFilters(){
  const rows=state.summary?.localidades||[], ramal=q('rain-v5-ramal'), loc=q('rain-v5-localidad');
  if(!ramal||!loc)return;
  const oldR=state.ramal, oldL=state.selectedId;
- const ramales=[...new Set(rows.map(r=>r.ramal).filter(Boolean).filter(r=>r!=='C / C15'))].sort();
+ const ramales=[...new Set(rows.map(r=>r.ramal).filter(Boolean).filter(r=>r!=='C / C15' && r!=='C / C12'))].sort();
  ramal.innerHTML='<option value="all">Todos los ramales</option>'+ramales.map(r=>'<option>'+r+'</option>').join('');
  state.ramal=[...ramal.options].some(o=>o.value===oldR)?oldR:'all';ramal.value=state.ramal;
  loc.innerHTML=rows.map(r=>'<option value="'+r.localidadId+'">'+r.localidad+' · '+r.ramal+'</option>').join('');
