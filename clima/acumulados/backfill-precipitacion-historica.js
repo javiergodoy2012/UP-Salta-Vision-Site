@@ -5,7 +5,7 @@
  * Seguridad:
  * - DRY RUN por defecto.
  * - Solo escribe si se invoca con --write.
- * - IDs idempotentes: <localidadId>_<YYYY-MM-DD>.
+ * - IDs idempotentes: <localidadId>_<YYYY-MM-DD>_openmeteo.
  *
  * Ejemplos:
  *   node backfill-precipitacion-historica.js --days=7
@@ -112,7 +112,7 @@ async function main(){
       if(write){
         let batch=db.batch(), count=0;
         for(const row of rows){
-          const ref=db.collection(COLLECTION).doc(`${loc.id}_${row.fecha}`);
+          const ref=db.collection(COLLECTION).doc(`${loc.id}_${row.fecha}_openmeteo`);
           batch.set(ref,{
             localidadId:loc.id,
             localidad:loc.localidad,
