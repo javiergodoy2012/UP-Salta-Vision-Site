@@ -18,7 +18,7 @@ El histórico **no debe mezclar pronóstico con observado**.
 1. Una Cloud Function independiente corre diariamente.
 2. Consulta Open-Meteo para el **día anterior** con `daily=precipitation_sum`.
 3. Guarda un documento por localidad y fecha.
-4. El ID es idempotente: `<localidadId>_<YYYY-MM-DD>`.
+4. El ID es idempotente: `<localidadId>_<YYYY-MM-DD>_openmeteo`.
 5. Clima Alert consulta esos documentos y calcula acumulados en lectura.
 
 ## Firestore
@@ -38,8 +38,8 @@ Documento ejemplo:
   "fecha": "2026-09-30",
   "precipitacionMm": 6.1,
   "fuente": "open-meteo",
-  "tipo": "observado",
-  "estado": "confirmado",
+  "tipo": "historico_modelado",
+  "estado": "consolidado",
   "actualizado": "serverTimestamp"
 }
 ```
