@@ -21,3 +21,22 @@
 .rain-v5-empty{padding:28px;text-align:center;color:var(--ink3);font-size:12px}
 @media(max-width:900px){.rain-v5-cards{grid-template-columns:1fr 1fr}.rain-v5-grid{grid-template-columns:1fr}.rain-v5-mode{margin-left:0}}
 @media(max-width:600px){.rain-v5-cards{grid-template-columns:1fr}.rain-v5-toolbar .refresh-select{width:100%}.rain-v5-rank-row{grid-template-columns:110px 1fr 62px}}
+
+
+/* Estadística mensual */
+.rain-month-section{display:grid;gap:14px;margin-top:4px;padding-top:14px;border-top:1px solid var(--border)}
+.rain-month-section[hidden]{display:none!important}
+.rain-month-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.rain-month-head h3{font-size:18px;margin:0 0 4px}
+.rain-month-head p{font-size:12px;color:var(--ink3);margin:0}
+.rain-month-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rain-month-name{color:var(--ink);font-weight:600}
+.rain-month-daily-chart{height:190px;display:flex;align-items:flex-end;gap:4px;padding:16px 6px 4px;border-radius:10px;background:var(--bg2);overflow-x:auto}
+.rain-month-day{min-width:20px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}
+.rain-month-daybar{width:12px;min-height:3px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,var(--accent2),var(--rain))}
+.rain-month-day span{font-size:9px;color:var(--ink3);font-family:'Space Mono',monospace}
+@media(max-width:700px){
+  .rain-month-actions{width:100%}
+  .rain-month-actions .refresh-select{flex:1;min-width:160px}
+  .rain-month-daily-chart{height:160px}
+}
