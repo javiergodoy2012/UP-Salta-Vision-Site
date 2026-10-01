@@ -1,0 +1,9 @@
+// Clima Alert · Acumulados de precipitación
+// Fragmento propuesto para firestore.rules.
+// Debe incorporarse dentro de service cloud.firestore -> match /databases/{database}/documents
+// reutilizando la función isApproved() existente del proyecto.
+
+match /precipitacionesDiarias/{documento} {
+  allow read: if isApproved();
+  allow write: if false;
+}
