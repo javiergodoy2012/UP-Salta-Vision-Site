@@ -93,7 +93,9 @@
     };
   }
 
-  async function cargarResumen({referencia=isoDateInTZ(), force=false}={}){
+  async function cargarResumen({referencia=shiftDate(isoDateInTZ(),-1), force=false}={}){
+    // referencia = último día consolidado. La función diaria guarda el día anterior,
+    // por lo que 24 h representa el último día completo disponible y no el día en curso.
     const desde = shiftDate(referencia,-31);
     const registros = await cargarRango({desde,hasta:referencia,force});
     const grupos = porLocalidad(registros);
@@ -125,6 +127,7 @@
     cargarResumen,
     acumuladosLocalidad,
     limpiarCache,
-    isoDateInTZ
+    isoDateInTZ,
+    shiftDate
   });
 })(window);
