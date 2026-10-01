@@ -756,14 +756,14 @@ body.modal-open{overflow:hidden;}
   <div class="rain-v5-shell">
     <div>
       <div style="font-size:18px;font-weight:700;">Acumulados de precipitación</div>
-      <div style="font-size:12px;color:var(--ink3);margin-top:3px;">Histórico consolidado/modelado por localidad y ramal · 24 h, 72 h, 7 días y mes actual.</div>
+      <div style="font-size:12px;color:var(--ink3);margin-top:3px;">Histórico consolidado/modelado por localidad y ramal · último día completo, 72 h, 7 días y mes en curso.</div>
     </div>
 
     <div class="rain-v5-toolbar">
-      <button class="btn btn-ghost btn-sm rain-v5-period" data-rain-period="24" type="button">24 h</button>
+      <button class="btn btn-ghost btn-sm rain-v5-period" data-rain-period="24" type="button">Último día</button>
       <button class="btn btn-ghost btn-sm rain-v5-period" data-rain-period="72" type="button">72 h</button>
       <button class="btn btn-ghost btn-sm rain-v5-period active" data-rain-period="168" type="button">7 días</button>
-      <button class="btn btn-ghost btn-sm rain-v5-period" data-rain-period="month" type="button">Mes actual</button>
+      <button class="btn btn-ghost btn-sm rain-v5-period" data-rain-period="month" type="button">Mes en curso</button>
       <select class="refresh-select" id="rain-v5-ramal"><option value="all">Todos los ramales</option></select>
       <select class="refresh-select" id="rain-v5-localidad"></select>
       <button class="btn btn-ghost btn-sm" id="rain-v5-refresh" type="button">Actualizar</button>
@@ -774,7 +774,7 @@ body.modal-open{overflow:hidden;}
       <div class="rain-v5-card"><div class="rain-v5-label">Mayor acumulado</div><div class="rain-v5-value" id="rain-v5-max">—</div><div class="rain-v5-note" id="rain-v5-max-note">—</div></div>
       <div class="rain-v5-card"><div class="rain-v5-label">Promedio regional</div><div class="rain-v5-value" id="rain-v5-avg">—</div><div class="rain-v5-note">Localidades visibles</div></div>
       <div class="rain-v5-card"><div class="rain-v5-label">Localidades con datos</div><div class="rain-v5-value" id="rain-v5-count">—</div><div class="rain-v5-note">Histórico disponible</div></div>
-      <div class="rain-v5-card"><div class="rain-v5-label">Fuente</div><div class="rain-v5-value" style="font-size:17px;">Open-Meteo</div><div class="rain-v5-note">Histórico observado/modelado</div></div>
+      <div class="rain-v5-card"><div class="rain-v5-label">Fuente</div><div class="rain-v5-value" style="font-size:17px;">Open-Meteo</div><div class="rain-v5-note">Histórico Open-Meteo · modelado</div></div>
     </div>
 
     <div class="rain-v5-grid">
