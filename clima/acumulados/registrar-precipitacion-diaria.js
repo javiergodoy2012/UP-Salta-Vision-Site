@@ -88,7 +88,7 @@ exports.registrarPrecipitacionDiaria = onSchedule(
     const results = await Promise.allSettled(
       LOCALIDADES.map(async loc => {
         const precipitacionMm = await fetchDailyPrecipitation(loc, fecha);
-        const docId = `${loc.id}_${fecha}`;
+        const docId = `${loc.id}_${fecha}_openmeteo`;
 
         await db.collection(COLLECTION).doc(docId).set({
           localidadId: loc.id,
