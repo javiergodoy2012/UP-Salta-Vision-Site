@@ -7,7 +7,7 @@ let state={period:'168',summary:null,selectedId:'',ramal:'all',loading:false};
 function q(id){return document.getElementById(id)}
 function mm(v){return Number(v||0).toFixed(1).replace('.',',')+' mm'}
 function today(){return global.ClimaRainHistory?.isoDateInTZ?.() || new Intl.DateTimeFormat('en-CA',{timeZone:REF_TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
-function periodValue(row){return state.period==='24'?row.h24:state.period==='72'?row.h72:state.period==='month'?row.mes:row.d7}
+function periodValue(row){return state.period==='24'?row.h24:state.period==='72'?row.h72:state.period==='31'?row.d31:state.period==='month'?row.mes:row.d7}
 function visibleRows(){return (state.summary?.localidades||[]).filter(r=>state.ramal==='all'||r.ramal===state.ramal)}
 function setMode(kind,label){const el=q('rain-v5-mode');if(!el)return;el.className='rain-v5-mode '+kind;el.textContent=label}
 function setLoading(on){state.loading=on;const b=q('rain-v5-refresh');if(b){b.disabled=on;b.textContent=on?'Actualizando…':'Actualizar'}}
@@ -20,7 +20,7 @@ async function load(force=false){
  }
  setLoading(true);
  try{
-   state.summary=await global.ClimaRainHistory.cargarResumen({referencia:today(),force});
+   state.summary=await global.ClimaRainHistory.cargarResumen({force});
    setMode('real','FIRESTORE · HISTÓRICO');
    rebuildFilters();
    render();
@@ -56,7 +56,7 @@ function render(){
 function renderDetail(){
  const row=(state.summary?.localidades||[]).find(r=>r.localidadId===state.selectedId);if(!row)return;
  q('rain-v5-title').textContent=row.localidad;q('rain-v5-meta').textContent=(row.provincia||'')+' · Ramal '+(row.ramal||'—');
- q('rain-v5-24').textContent=mm(row.h24);q('rain-v5-72').textContent=mm(row.h72);q('rain-v5-7').textContent=mm(row.d7);q('rain-v5-month').textContent=mm(row.mes);
+ q('rain-v5-24').textContent=mm(row.h24);q('rain-v5-72').textContent=mm(row.h72);q('rain-v5-7').textContent=mm(row.d7);q('rain-v5-month').textContent=mm(row.d31);
  const records=(state.summary.registros||[]).filter(r=>r.localidadId===row.localidadId).sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,31);
  q('rain-v5-body').innerHTML=records.length?records.map(r=>'<tr><td>'+r.fecha+'</td><td>'+r.localidad+'</td><td>'+r.ramal+'</td><td><strong>'+mm(r.precipitacionMm)+'</strong></td><td><span class="rain-v5-source">'+r.fuente+'</span></td><td>'+r.estado+'</td></tr>').join(''):'<tr><td colspan="6" class="rain-v5-empty">Sin registros para esta localidad.</td></tr>';
 }
