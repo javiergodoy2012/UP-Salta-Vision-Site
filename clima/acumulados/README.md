@@ -44,6 +44,53 @@ Documento ejemplo:
 }
 ```
 
+## Lectura preparada
+
+Archivo:
+
+`clima/acumulados/precipitacion-historica.js`
+
+Expone:
+
+`window.ClimaRainHistory`
+
+Métodos principales:
+
+- `cargarRango({desde,hasta})`
+- `cargarResumen({referencia})`
+- `acumuladosLocalidad(registros, localidadId, referencia)`
+- `limpiarCache()`
+
+La lectura usa la instancia Firebase compat que ya utiliza Clima Alert:
+
+`firebase.app().firestore()`
+
+Para evitar consultas innecesarias, mantiene caché local de 5 minutos.
+
+### Decisión de consulta
+
+El adaptador consulta por rango de `fecha` y agrupa por localidad en cliente. Con 23 localidades y un horizonte mensual, el volumen esperado es pequeño y se evita depender inicialmente de índices compuestos adicionales.
+
+## Integración futura en la UI
+
+La V3 visual debe reemplazar su `localStorage` por:
+
+```js
+const resumen = await ClimaRainHistory.cargarResumen();
+```
+
+Con ese objeto se pueden alimentar:
+
+- 24 h
+- 72 h
+- 7 días
+- mes actual
+- ranking por localidad
+- ranking por ramal
+- histórico detallado
+
+El pronóstico actual de Clima Alert debe seguir leyendo sus fuentes actuales y mostrarse separado.
+
 ## Reglas de diseño
 
 - No modificar `monitorClimaAlert`.
