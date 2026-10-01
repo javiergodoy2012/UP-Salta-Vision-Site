@@ -40,3 +40,13 @@
   .rain-month-actions .refresh-select{flex:1;min-width:160px}
   .rain-month-daily-chart{height:160px}
 }
+
+
+/* Histórico diario como consulta desplegable */
+.rain-history-details{padding:0;overflow:hidden}
+.rain-history-details>summary{list-style:none;cursor:pointer;padding:14px 16px;font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;justify-content:space-between}
+.rain-history-details>summary::-webkit-details-marker{display:none}
+.rain-history-details>summary::after{content:'▾';color:var(--ink3);font-size:14px;transition:transform .15s ease}
+.rain-history-details[open]>summary::after{transform:rotate(180deg)}
+.rain-history-details-body{padding:0 16px 16px;border-top:1px solid var(--border)}
+.rain-history-details-body>p{padding-top:12px}
