@@ -38,15 +38,25 @@ async function load(force=false){
    renderEmpty('No se pudo leer el histórico de precipitaciones. La vista principal de Clima Alert continúa funcionando normalmente.');
  }finally{setLoading(false)}
 }
+function rebuildLocalidadFilter(){
+ const loc=q('rain-v5-localidad');
+ if(!loc)return;
+ const rows=visibleRows();
+ const oldL=state.selectedId;
+ loc.innerHTML=rows.map(r=>'<option value="'+r.localidadId+'">'+r.localidad+' · '+r.ramal+'</option>').join('');
+ state.selectedId=rows.some(r=>r.localidadId===oldL)?oldL:(rows[0]?.localidadId||'');
+ loc.value=state.selectedId;
+}
+
 function rebuildFilters(){
  const rows=state.summary?.localidades||[], ramal=q('rain-v5-ramal'), loc=q('rain-v5-localidad');
  if(!ramal||!loc)return;
- const oldR=state.ramal, oldL=state.selectedId;
+ const oldR=state.ramal;
  const ramales=[...new Set(rows.map(r=>r.ramal).filter(Boolean).filter(r=>r!=='C / C15' && r!=='C / C12'))].sort();
  ramal.innerHTML='<option value="all">Todos los ramales</option>'+ramales.map(r=>'<option>'+r+'</option>').join('');
- state.ramal=[...ramal.options].some(o=>o.value===oldR)?oldR:'all';ramal.value=state.ramal;
- loc.innerHTML=rows.map(r=>'<option value="'+r.localidadId+'">'+r.localidad+' · '+r.ramal+'</option>').join('');
- state.selectedId=rows.some(r=>r.localidadId===oldL)?oldL:(rows[0]?.localidadId||'');loc.value=state.selectedId;
+ state.ramal=[...ramal.options].some(o=>o.value===oldR)?oldR:'all';
+ ramal.value=state.ramal;
+ rebuildLocalidadFilter();
 }
 function render(){
  const rows=visibleRows();
@@ -77,7 +87,7 @@ function renderEmpty(message){
 function selectLocation(id){state.selectedId=id;const l=q('rain-v5-localidad');if(l)l.value=id;renderDetail()}
 function bind(){
  document.querySelectorAll('[data-rain-period]').forEach(b=>b.addEventListener('click',()=>{state.period=b.dataset.rainPeriod;document.querySelectorAll('[data-rain-period]').forEach(x=>x.classList.toggle('active',x===b));render()}));
- q('rain-v5-ramal')?.addEventListener('change',e=>{state.ramal=e.target.value;const rows=visibleRows();state.selectedId=rows[0]?.localidadId||'';render()});
+ q('rain-v5-ramal')?.addEventListener('change',e=>{state.ramal=e.target.value;rebuildLocalidadFilter();render()});
  q('rain-v5-localidad')?.addEventListener('change',e=>selectLocation(e.target.value));
  q('rain-v5-refresh')?.addEventListener('click',()=>load(true));
 }
