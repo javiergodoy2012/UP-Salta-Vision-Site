@@ -1,0 +1,23 @@
+/* Clima Alert · Acumulados V5 · aislado del resto del dashboard */
+.rain-v5-shell{display:grid;gap:14px}
+.rain-v5-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
+.rain-v5-toolbar .refresh-select{min-width:150px}
+.rain-v5-period.active{border-color:var(--rain);color:var(--rain);background:rgba(6,182,212,.08)}
+.rain-v5-mode{margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;padding:5px 10px;border:1px solid var(--border2);border-radius:999px;color:var(--ink3)}
+.rain-v5-mode.real{border-color:rgba(34,197,94,.45);color:#86efac;background:rgba(34,197,94,.08)}
+.rain-v5-mode.sim{border-color:rgba(245,158,11,.45);color:#fcd34d;background:rgba(245,158,11,.08)}
+.rain-v5-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.rain-v5-card,.rain-v5-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.rain-v5-card{padding:14px 16px}.rain-v5-label{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px}
+.rain-v5-value{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;margin:6px 0}.rain-v5-note{font-size:11px;color:var(--ink3)}
+.rain-v5-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.rain-v5-panel{padding:16px}
+.rain-v5-panel h3{font-size:16px;margin:0 0 4px}.rain-v5-panel p{font-size:12px;color:var(--ink3);margin:0 0 12px}
+.rain-v5-rank{display:grid;gap:8px}.rain-v5-rank-row{display:grid;grid-template-columns:minmax(130px,1fr) 1.4fr 70px;gap:10px;align-items:center;font-size:12px}
+.rain-v5-link{all:unset;color:var(--rain);font-weight:700;cursor:pointer}.rain-v5-bar{height:8px;background:var(--bg2);border-radius:99px;overflow:hidden}.rain-v5-fill{height:100%;background:linear-gradient(90deg,var(--rain),var(--accent2));border-radius:99px}
+.rain-v5-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rain-v5-metric{background:var(--bg2);border-radius:9px;padding:10px}.rain-v5-metric span{font-size:10px;color:var(--ink3)}.rain-v5-metric strong{display:block;font-family:'Space Mono',monospace;font-size:18px;margin-top:4px}
+.rain-v5-separation{margin-top:10px;padding:10px 12px;border:1px dashed rgba(6,182,212,.35);border-radius:9px;background:rgba(6,182,212,.05);font-size:11px;color:var(--ink2)}
+.rain-v5-table-wrap{overflow:auto;max-height:430px}.rain-v5-table{width:100%;border-collapse:collapse;font-size:12px}.rain-v5-table th,.rain-v5-table td{padding:9px 8px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:left}.rain-v5-table th{color:var(--ink3);font-weight:600;position:sticky;top:0;background:var(--surface)}
+.rain-v5-source{display:inline-flex;padding:3px 7px;border-radius:999px;background:rgba(34,197,94,.1);color:#86efac;font-size:10px;font-weight:700}
+.rain-v5-empty{padding:28px;text-align:center;color:var(--ink3);font-size:12px}
+@media(max-width:900px){.rain-v5-cards{grid-template-columns:1fr 1fr}.rain-v5-grid{grid-template-columns:1fr}.rain-v5-mode{margin-left:0}}
+@media(max-width:600px){.rain-v5-cards{grid-template-columns:1fr}.rain-v5-toolbar .refresh-select{width:100%}.rain-v5-rank-row{grid-template-columns:110px 1fr 62px}}
