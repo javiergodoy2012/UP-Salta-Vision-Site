@@ -89,6 +89,7 @@
       h24: suma(own.filter(r=>r.fecha===referencia)),
       h72: suma(own.filter(r=>r.fecha>=shiftDate(referencia,-2))),
       d7: suma(own.filter(r=>r.fecha>=shiftDate(referencia,-6))),
+      d31: suma(own.filter(r=>r.fecha>=shiftDate(referencia,-30))),
       mes: suma(own.filter(r=>r.fecha>=monthStart))
     };
   }
@@ -96,7 +97,7 @@
   async function cargarResumen({referencia=shiftDate(isoDateInTZ(),-1), force=false}={}){
     // referencia = último día consolidado. La función diaria guarda el día anterior,
     // por lo que 24 h representa el último día completo disponible y no el día en curso.
-    const desde = shiftDate(referencia,-31);
+    const desde = shiftDate(referencia,-30);
     const registros = await cargarRango({desde,hasta:referencia,force});
     const grupos = porLocalidad(registros);
 
@@ -115,6 +116,7 @@
       referencia,
       registros,
       localidades,
+      ranking31d:[...localidades].sort((a,b)=>b.d31-a.d31),
       ranking7d:[...localidades].sort((a,b)=>b.d7-a.d7),
       ranking72h:[...localidades].sort((a,b)=>b.h72-a.h72)
     };
