@@ -3267,7 +3267,8 @@ function climaMonthFromQuestion(question){
   const names={enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,setiembre:9,octubre:10,noviembre:11,diciembre:12};
   const explicit=q.match(/\b(20\d{2})[-/](0?[1-9]|1[0-2])\b/);
   if(explicit)return explicit[1]+'-'+String(explicit[2]).padStart(2,'0');
-  const named=Object.entries(names).find(([name])=>q.includes(name));
+  const words=new Set(q.split(' '));
+  const named=Object.entries(names).find(([name])=>words.has(name));
   if(named){
     const year=Number(q.match(/\b20\d{2}\b/)?.[0]||localISODate().slice(0,4));
     return year+'-'+String(named[1]).padStart(2,'0');
@@ -3329,8 +3330,8 @@ async function climaAccumContext(scope){
   if(!window.ClimaRainHistory?.cargarResumen)return null;
   try{
     const summary=await window.ClimaRainHistory.cargarResumen({force:false});
-    const ids=climaScopeIds(scope);
-    const rows=(summary.localidades||[]).filter(x=>scope.type==='all'||ids.has(x.localidadId)).map(x=>({
+    const ids=climaScopeIds(scope), names=new Set([...climaScopeLocalities(scope)].map(chatNormalize));
+    const rows=(summary.localidades||[]).filter(x=>scope.type==='all'||ids.has(x.localidadId)||names.has(chatNormalize(x.localidad||''))).map(x=>({
       localidadId:x.localidadId,localidad:x.localidad,ramal:x.ramal,
       h24:Number(x.h24||0),h72:Number(x.h72||0),d7:Number(x.d7||0),d31:Number(x.d31||0)
     }));
@@ -3341,8 +3342,8 @@ async function climaDailyHistoryContext(scope,date){
   if(!date||!window.firebase?.firestore)return null;
   try{
     const snap=await firebase.app().firestore().collection('precipitacionesDiarias').where('fecha','==',date).get();
-    const ids=climaScopeIds(scope);
-    const rows=snap.docs.map(d=>d.data()).filter(x=>scope.type==='all'||ids.has(x.localidadId)).map(x=>({
+    const ids=climaScopeIds(scope), names=new Set([...climaScopeLocalities(scope)].map(chatNormalize));
+    const rows=snap.docs.map(d=>d.data()).filter(x=>scope.type==='all'||ids.has(x.localidadId)||names.has(chatNormalize(x.localidad||''))).map(x=>({
       fecha:x.fecha,localidadId:x.localidadId,localidad:x.localidad,ramal:x.ramal,
       precipitacionMm:Number(x.precipitacionMm||0),fuente:x.fuente||null,tipo:x.tipo||null,estado:x.estado||null
     }));
@@ -3375,8 +3376,8 @@ async function answerAccumulation(scope,question){
   if(!window.ClimaRainHistory?.cargarResumen)return null;
   const q=chatNormalize(question);
   const summary=await window.ClimaRainHistory.cargarResumen({force:false});
-  const ids=climaScopeIds(scope);
-  const rows=(summary.localidades||[]).filter(x=>scope.type==='all'||ids.has(x.localidadId));
+  const ids=climaScopeIds(scope), names=new Set([...climaScopeLocalities(scope)].map(chatNormalize));
+  const rows=(summary.localidades||[]).filter(x=>scope.type==='all'||ids.has(x.localidadId)||names.has(chatNormalize(x.localidad||'')));
   if(!rows.length)return null;
   const key=/31\s*dias?|ultimo mes|último mes/.test(question.toLowerCase())?'d31':/72\s*h|72\s*horas?/.test(q)?'h72':/7\s*dias?|semana/.test(q)?'d7':'h24';
   const label={h24:'último día completo',h72:'últimas 72 h',d7:'últimos 7 días',d31:'últimos 31 días'}[key];
@@ -3405,8 +3406,8 @@ async function answerMonthlyStored(scope,question){
     const best=[...rows].sort((a,b)=>b.total-a.total)[0];
     return {text:`En ${ym}, el mayor acumulado por ramal fue ${best.ramal}, con ${best.total.toFixed(1)} mm.`,source:`Cierre mensual ${ym} · Firestore · histórico modelado Open-Meteo`};
   }
-  const ids=climaScopeIds(scope),names=climaScopeLocalities(scope);
-  let rows=(d.rankingLocalidades||[]).filter(x=>scope.type==='all'||ids.has(x.localidadId)||names.has(x.localidad));
+  const ids=climaScopeIds(scope),names=new Set([...climaScopeLocalities(scope)].map(chatNormalize));
+  let rows=(d.rankingLocalidades||[]).filter(x=>scope.type==='all'||ids.has(x.localidadId)||names.has(chatNormalize(x.localidad||'')));
   if(!rows.length)return null;
   rows=rows.map(x=>({...x,total:Number(x.totalMm??x.total??0)}));
   if(scope.type==='sector'){
