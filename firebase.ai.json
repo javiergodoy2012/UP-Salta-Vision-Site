@@ -1,0 +1,3 @@
+{
+  "functions": [{"source": "functions-ai", "codebase": "sitevision-ai", "ignore": ["node_modules", "*.log"]}]
+}
