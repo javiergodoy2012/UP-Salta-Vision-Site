@@ -13,7 +13,15 @@ export async function analyze(module, question, local) {
     const response = await fetch('https://southamerica-east1-up-salta-vision.cloudfunctions.net/razonarSiteVision', {
       method: 'POST', signal: controller.signal,
       headers: {'Content-Type': 'application/json', Authorization: `Bearer ${token}`},
-      body: JSON.stringify({data: {module, question, excerpt: module === 'site' ? 'Contexto estructurado Site Visión' : local.text.slice(0, 12000), ...(module === 'site' ? {context: local.context} : {}), source: local.source || 'Consulta local'}})
+      body: JSON.stringify({data: {
+        module,
+        question,
+        excerpt: module === 'site'
+          ? 'Contexto estructurado Site Visión'
+          : (local.context ? 'Contexto estructurado Clima Alert' : local.text.slice(0, 12000)),
+        ...((module === 'site' || (module === 'clima' && local.context)) ? {context: local.context} : {}),
+        source: local.source || 'Consulta local'
+      }})
     });
     const payload = await response.json();
     const data = payload.result || payload.data;
