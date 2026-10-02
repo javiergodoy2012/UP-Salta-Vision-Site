@@ -3379,7 +3379,7 @@ async function answerAccumulation(scope,question){
   const ids=climaScopeIds(scope), names=new Set([...climaScopeLocalities(scope)].map(chatNormalize));
   const rows=(summary.localidades||[]).filter(x=>scope.type==='all'||ids.has(x.localidadId)||names.has(chatNormalize(x.localidad||'')));
   if(!rows.length)return null;
-  const key=/31\s*dias?|ultimo mes|último mes/.test(question.toLowerCase())?'d31':/72\s*h|72\s*horas?/.test(q)?'h72':/7\s*dias?|semana/.test(q)?'d7':'h24';
+  const key=/31\s*dias?|ultimo mes/.test(q)?'d31':/72\s*h|72\s*horas?/.test(q)?'h72':/7\s*dias?|semana/.test(q)?'d7':'h24';
   const label={h24:'último día completo',h72:'últimas 72 h',d7:'últimos 7 días',d31:'últimos 31 días'}[key];
   if(scope.type==='sector'){
     const r=rows[0];
