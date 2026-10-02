@@ -3260,7 +3260,7 @@ async function answerFuture(scope,period){await ensureCurrentData(scope.sectors)
 async function fetchPastDay(sector,date){const recent=date>=localISODate(-7);const params=new URLSearchParams({latitude:String(sector.lat),longitude:String(sector.lon),daily:'temperature_2m_max,temperature_2m_min,precipitation_sum,wind_gusts_10m_max',wind_speed_unit:'kmh',timezone:ARGENTINA_TZ});let url;if(recent){params.set('past_days','7');params.set('forecast_days','1');url=`https://api.open-meteo.com/v1/forecast?${params}`;}else{params.set('start_date',date);params.set('end_date',date);url=`https://archive-api.open-meteo.com/v1/archive?${params}`;}const response=await fetchWithTimeout(url,1);const data=await response.json();const index=data.daily?.time?.indexOf(date)??-1;if(index<0)throw new Error('Sin histórico');return {sector,max:Number(data.daily.temperature_2m_max?.[index]),min:Number(data.daily.temperature_2m_min?.[index]),rain:Number(data.daily.precipitation_sum?.[index]||0),gust:Number(data.daily.wind_gusts_10m_max?.[index]||0)};}
 async function answerPast(scope,period){const results=await Promise.all(scope.sectors.map(sector=>fetchPastDay(sector,period.date).catch(()=>null)));const rows=results.filter(Boolean);if(!rows.length)throw new Error('Sin histórico');if(scope.type==='sector'){const row=rows[0];return {text:`En ${scope.label}, ${period.label}: temperatura entre ${row.min.toFixed(1)} y ${row.max.toFixed(1)} °C, precipitación acumulada ${row.rain.toFixed(1)} mm y ráfaga máxima ${row.gust.toFixed(0)} km/h.`,source:'Archivo histórico Open-Meteo · datos de reanálisis/modelados'};}const maxRain=rows.reduce((a,b)=>b.rain>a.rain?b:a),maxGust=rows.reduce((a,b)=>b.gust>a.gust?b:a),maxTemp=rows.reduce((a,b)=>b.max>a.max?b:a),minTemp=rows.reduce((a,b)=>b.min<a.min?b:a);return {text:`En ${scope.label}, ${period.label}: mayor lluvia en ${maxRain.sector.name}, ${maxRain.rain.toFixed(1)} mm; mayor ráfaga en ${maxGust.sector.name}, ${maxGust.gust.toFixed(0)} km/h; máxima más alta ${maxTemp.max.toFixed(1)} °C en ${maxTemp.sector.name}; mínima más baja ${minTemp.min.toFixed(1)} °C en ${minTemp.sector.name}.`,source:`Archivo histórico Open-Meteo · ${rows.length} localidades`};}
 function isSiteVisionQuestion(q){const weather=['clima','tiempo','temperatura','lluvia','llovio','viento','rafaga','pronost','meteorolog','humedad','tormenta','granizo'].some(term=>q.includes(term));if(weather)return false;const railway=['pk','progresiva','coordenada','codigo telegrafico','descarril','personal','dotacion','cliente','dispositivo de seguridad','vigilancia','tramo activo','tramo inactivo','red ferroviaria','geometria ferroviaria','estacion','apeadero'].some(term=>q.includes(term));return railway||(/\bramal\s+c(?:13|14|15|16|18|25)?\b/.test(q)&&['estado','rango','activo','inactivo','recorrido','kilometro'].some(term=>q.includes(term)));}
-function isClimaQuestion(q){return ['clima','tiempo','temperatura','lluvia','llovio','viento','rafaga','pronost','meteorolog','humedad','tormenta','granizo','alerta','ahora','hoy','manana','ayer','semana','fecha'].some(term=>q.includes(term));}
+function isClimaQuestion(q){return ['clima','tiempo','temperatura','lluvia','llovio','precipit','acumul','viento','rafaga','pronost','meteorolog','humedad','tormenta','granizo','alerta','umbral','mensual','cierre','histor','compar','ahora','hoy','manana','ayer','semana','fecha'].some(term=>q.includes(term));}
 
 function climaMonthFromQuestion(question){
   const q=chatNormalize(question);
@@ -3367,6 +3367,79 @@ async function climaMonthlyContext(scope,ym){
       serieDiaria:(d.serieDiaria||[]).slice(0,31)};
   }catch(_){return null;}
 }
+
+function climaRamalList(question){
+  return [...new Set((chatNormalize(question).match(/\bc(?:13|14|15|18|12)?\b/g)||[]).map(v=>v.toUpperCase()))];
+}
+async function answerAccumulation(scope,question){
+  if(!window.ClimaRainHistory?.cargarResumen)return null;
+  const q=chatNormalize(question);
+  const summary=await window.ClimaRainHistory.cargarResumen({force:false});
+  const ids=climaScopeIds(scope);
+  const rows=(summary.localidades||[]).filter(x=>scope.type==='all'||ids.has(x.localidadId));
+  if(!rows.length)return null;
+  const key=/31\s*dias?|ultimo mes|último mes/.test(question.toLowerCase())?'d31':/72\s*h|72\s*horas?/.test(q)?'h72':/7\s*dias?|semana/.test(q)?'d7':'h24';
+  const label={h24:'último día completo',h72:'últimas 72 h',d7:'últimos 7 días',d31:'últimos 31 días'}[key];
+  if(scope.type==='sector'){
+    const r=rows[0];
+    return {text:`${scope.label}: acumulado de ${Number(r[key]||0).toFixed(1)} mm en ${label}.`,source:`Firestore · histórico modelado Open-Meteo · referencia ${summary.referencia}`};
+  }
+  const best=[...rows].sort((a,b)=>Number(b[key]||0)-Number(a[key]||0))[0];
+  return {text:`${scope.label}: el mayor acumulado de ${label} es ${best.localidad}, con ${Number(best[key]||0).toFixed(1)} mm.`,source:`Firestore · histórico modelado Open-Meteo · referencia ${summary.referencia}`};
+}
+async function answerMonthlyStored(scope,question){
+  const ym=climaMonthFromQuestion(question);
+  if(!ym||!window.firebase?.firestore)return null;
+  const snap=await firebase.app().firestore().collection('estadisticasMensualesLluvia').doc(ym).get();
+  if(!snap.exists)return {text:`No hay un cierre mensual consolidado disponible para ${ym}.`,source:'Clima Alert · cierres mensuales Firestore'};
+  const d=snap.data()||{},q=chatNormalize(question);
+  if(/ramal/.test(q)){
+    const wanted=climaRamalList(question);
+    let rows=(d.totalesPorRamal||[]).map(x=>({...x,total:Number(x.totalMm??x.total??0)}));
+    if(wanted.length)rows=rows.filter(x=>wanted.includes(String(x.ramal||'').toUpperCase()));
+    if(!rows.length)return null;
+    if(/compar/.test(q)&&rows.length>1){
+      rows.sort((a,b)=>b.total-a.total);
+      return {text:rows.map(x=>`Ramal ${x.ramal}: ${x.total.toFixed(1)} mm`).join('\n'),source:`Cierre mensual ${ym} · Firestore · histórico modelado Open-Meteo`};
+    }
+    const best=[...rows].sort((a,b)=>b.total-a.total)[0];
+    return {text:`En ${ym}, el mayor acumulado por ramal fue ${best.ramal}, con ${best.total.toFixed(1)} mm.`,source:`Cierre mensual ${ym} · Firestore · histórico modelado Open-Meteo`};
+  }
+  const ids=climaScopeIds(scope),names=climaScopeLocalities(scope);
+  let rows=(d.rankingLocalidades||[]).filter(x=>scope.type==='all'||ids.has(x.localidadId)||names.has(x.localidad));
+  if(!rows.length)return null;
+  rows=rows.map(x=>({...x,total:Number(x.totalMm??x.total??0)}));
+  if(scope.type==='sector'){
+    const r=rows[0];
+    return {text:`${r.localidad}: acumulado mensual ${r.total.toFixed(1)} mm en ${ym}.`,source:`Cierre mensual ${ym} · Firestore · histórico modelado Open-Meteo`};
+  }
+  const best=[...rows].sort((a,b)=>b.total-a.total)[0];
+  return {text:`En ${ym}, la localidad con mayor acumulado fue ${best.localidad}, con ${best.total.toFixed(1)} mm.`,source:`Cierre mensual ${ym} · Firestore · histórico modelado Open-Meteo`};
+}
+async function answerForecastRamalComparison(question){
+  const ramales=climaRamalList(question);
+  if(ramales.length<2)return null;
+  const q=chatNormalize(question);
+  if(!/compar/.test(q)||!/proxim|pronost|7\s*dias?|semana/.test(q))return null;
+  const summaries=[];
+  for(const ramal of ramales){
+    const sectors=SECTORS.filter(item=>String(SECTOR_INFO[item.id]?.ramal||'').toUpperCase().split('/').map(v=>v.trim()).includes(ramal));
+    if(!sectors.length)continue;
+    await ensureCurrentData(sectors);
+    const rows=[];
+    for(const sector of sectors){
+      const d=weatherData[sector.id];if(!d?.daily?.time)continue;
+      for(let i=0;i<d.daily.time.length;i++)rows.push({sector,date:d.daily.time[i],rain:Number(d.daily.rain?.[i]||0),gust:Number(d.daily.gustMax?.[i]||0),max:Number(d.daily.tempMax?.[i])});
+    }
+    if(!rows.length)continue;
+    const totalRain=rows.reduce((a,r)=>a+r.rain,0);
+    const maxGust=rows.reduce((a,b)=>b.gust>a.gust?b:a);
+    const maxTemp=rows.reduce((a,b)=>b.max>a.max?b:a);
+    summaries.push({ramal,localidades:sectors.length,totalRain,maxGust,maxTemp});
+  }
+  if(summaries.length<2)return null;
+  return {text:summaries.map(s=>`Ramal ${s.ramal}: precipitación prevista acumulada entre sus localidades ${s.totalRain.toFixed(1)} mm; ráfaga máxima ${s.maxGust.gust.toFixed(0)} km/h en ${s.maxGust.sector.name}; máxima más alta ${s.maxTemp.max.toFixed(1)} °C en ${s.maxTemp.sector.name}.`).join('\n')+'\nLos acumulados por ramal suman localidades y no deben interpretarse como lluvia uniforme sobre todo el ramal.',source:'Pronóstico Open-Meteo · próximos 7 días'};
+}
 async function buildClimaContext(question,scope,period){
   await ensureCurrentData(scope.sectors);
   const q=chatNormalize(question);
@@ -3403,12 +3476,15 @@ async function answerClimaQuestion(question){
   const q=chatNormalize(question);
   if(isSiteVisionQuestion(q))return {text:'Esta consulta corresponde a Site Visión. Abrí el módulo VisiónSite para consultar PK, estaciones, ramales, personal, seguridad, clientes o descarrilos.',source:'Ámbitos separados por módulo · solo lectura'};
   if(q.includes('ayuda')||q.includes('que podes')||q==='hola')return {text:'Podés preguntarme por condiciones actuales, pronóstico de 7 días, alertas del Bot, umbrales, lluvia histórica, acumulados de 24/72 h, 7/31 días, cierres mensuales y comparaciones por localidad o ramal.',source:'Asistente Clima Alert · consulta meteorológica privada'};
-  if(!isClimaQuestion(q)&&!/acumul|histor|mensual|umbral|cierre/.test(q))return {text:'En esta pantalla respondo únicamente consultas meteorológicas. Para datos ferroviarios usá el asistente de Site Visión.',source:'Asistente Clima Alert · ámbito meteorológico'};
+  if(!isClimaQuestion(q))return {text:'En esta pantalla respondo únicamente consultas meteorológicas. Para datos ferroviarios usá el asistente de Site Visión.',source:'Asistente Clima Alert · ámbito meteorológico'};
   const scope=findChatScope(question),period=parseChatDate(question);
-  let result;
-  if(period.mode==='past')result=await answerPast(scope,period);
-  else if(period.mode==='future')result=await answerFuture(scope,period);
-  else result=await answerCurrent(scope);
+  let result=null;
+  if(/compar/.test(q))result=await answerForecastRamalComparison(question);
+  if(!result&&/mensual|cierre|septiembre|octubre|noviembre|diciembre|enero|febrero|marzo|abril|mayo|junio|julio|agosto|setiembre/.test(q))result=await answerMonthlyStored(scope,question);
+  if(!result&&/acumul/.test(q))result=await answerAccumulation(scope,question);
+  if(!result&&period.mode==='past')result=await answerPast(scope,period);
+  else if(!result&&period.mode==='future')result=await answerFuture(scope,period);
+  else if(!result)result=await answerCurrent(scope);
   result.context=await buildClimaContext(question,scope,period);
   return result;
 }
