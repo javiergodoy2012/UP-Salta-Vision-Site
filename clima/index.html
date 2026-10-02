@@ -3334,7 +3334,7 @@ async function climaAccumContext(scope){
       localidadId:x.localidadId,localidad:x.localidad,ramal:x.ramal,
       h24:Number(x.h24||0),h72:Number(x.h72||0),d7:Number(x.d7||0),d31:Number(x.d31||0)
     }));
-    return {fechaReferencia:summary.fechaReferencia||null,tipo:'historico_modelado',fuente:'open-meteo',localidades:rows};
+    return {fechaReferencia:summary.referencia||null,tipo:'historico_modelado',fuente:'open-meteo',localidades:rows};
   }catch(_){return null;}
 }
 async function climaDailyHistoryContext(scope,date){
