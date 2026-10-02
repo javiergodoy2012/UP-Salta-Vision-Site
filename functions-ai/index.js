@@ -31,6 +31,31 @@ function validateSiteContext(context) {
   }
   return context?.schema==='site-v1'&&JSON.stringify(context).length<=24000&&visit(context);
 }
+
+function validateClimaContext(context) {
+  const allowed = new Set([
+    'schema','scope','type','label','ramal','localidades','period','mode','date',
+    'semantics','actual','pronostico','historico','bot','oficial','generatedAt',
+    'thresholds','sectorId','localidad','hot','cold','rain','wind','enHot','enCold','enRain','enStorm',
+    'current','temperaturaC','precipitacionMm','vientoKmh','rafagaKmh','alertas',
+    'forecast','fecha','minimaC','maximaC','probPrecipitacionPct','rafagaMaxKmh','forecastOmitted',
+    'monitor','status','checkedSectors','schedule','lastRunAt','detail','state','severity','sectors',
+    'maxRain24','maxRain48','maxGust','updatedAt',
+    'accumulations','fechaReferencia','fuente','tipo','localidadId','h24','h72','d7','d31',
+    'dailyHistory','estado',
+    'monthly','periodo','desde','hasta','dias','cobertura','completas','promedioLocalidadMm',
+    'maximaLocalidad','maximoDiario','totalMm','max24Mm','diasLluvia','diasDisponibles','completo',
+    'rankingLocalidades','totalesPorRamal','serieDiaria','total','localidades','promedioMm'
+  ]);
+  function visit(value, depth=0) {
+    if(depth>9) return false;
+    if(value===null||typeof value==='number'||typeof value==='boolean')return true;
+    if(typeof value==='string')return value.length<=1000;
+    if(Array.isArray(value))return value.length<=100&&value.every(v=>visit(v,depth+1));
+    return value&&typeof value==='object'&&Object.entries(value).every(([k,v])=>allowed.has(k)&&visit(v,depth+1));
+  }
+  return context?.schema==='clima-v2'&&JSON.stringify(context).length<=50000&&visit(context);
+}
 function weatherQuestion(question){
  const q=question.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
  return /clima|meteorolog|lluv|llov|viento|rafaga|pronostico|temperatura|humedad|tormenta|granizo|(?:que|como).*tiempo.*(?:hoy|manana)/.test(q);
@@ -228,6 +253,8 @@ exports.razonarSiteVision = onCall({
     if(weatherQuestion(question))return {answer:"Esa información corresponde al módulo Clima Alert.",module,source:"Ámbitos separados por módulo"};
     if(!validateSiteContext(context))throw new HttpsError("invalid-argument", "Contexto operativo inválido o ajeno a Site Visión.");
   }
+  if(module === "clima" && context && !validateClimaContext(context))
+    throw new HttpsError("invalid-argument", "Contexto meteorológico inválido.");
   const now = Date.now(), day = new Date(now).toISOString().slice(0, 10);
   // Count attempted calls, including provider failures, to bound retries and costs.
   await db.runTransaction(async tx => {
@@ -244,14 +271,16 @@ exports.razonarSiteVision = onCall({
     tx.set(global, {day, count: total + 1});
   });
   const specialty = module === "clima"
-    ? "Ámbito exclusivo: meteorología. Interpretá condiciones y umbrales del extracto y sugerí precauciones generales. No consultes datos ferroviarios administrativos. Diferenciá pronóstico, reanálisis y observación; no trates la hora de consulta como hora de medición. Sin datos actuales no evalúes seguridad actual. Recomendá verificar SMN y protocolos vigentes, sin inventarlos."
+    ? "Ámbito exclusivo: meteorología de Clima Alert. Usá context cuando esté disponible y respondé solo con los datos incluidos. Podés relacionar condiciones actuales, pronóstico de 7 días, umbrales, alertas internas del Bot, históricos modelados, acumulados y cierres mensuales. Respetá estrictamente context.semantics: actual, pronóstico, histórico modelado y alerta interna no son equivalentes entre sí ni a una alerta oficial del SMN. No presentes histórico modelado como medición de pluviómetro. Si forecastOmitted es mayor que cero, no afirmes haber analizado todo el pronóstico. Si falta cobertura o período, indicá la limitación. No consultes datos ferroviarios administrativos. No trates la hora de consulta como hora de medición. Sin datos actuales no evalúes seguridad actual. Para decisiones operativas, recomendá verificar SMN y protocolos vigentes sin inventarlos."
     : "Ámbito exclusivo: análisis de datos ferroviarios de Site Visión. Interpretá estadísticas, patrones y calidad de datos con criterio de sistemas y operación ferroviaria. No respondas meteorología; remití a Clima Alert. Usá únicamente context. Relacioná las categorías solicitadas y resolvé referencias con ramal, PK, entities y previousIntent. Separá hechos registrados, cálculos e inferencias sin mostrar razonamiento interno. null y ausencia de registros no equivalen a cero. total cuenta registros, no personas. Si omitted es mayor que cero no calcules totales desde records. La configuración sin fecha no acredita vigencia actual. No priorices sectores sin criterios comparables; respondé que no tenés información suficiente. No atribuyas a todo el sistema una ausencia limitada a este contexto. No infieras causalidad de correlaciones ni tasas de accidentes sin exposición (trenes/km o tráfico).";
   try {
     const client = new GoogleGenAI({vertexai: true, project: process.env.GCLOUD_PROJECT || "up-salta-vision", location: "global"});
     if(module === "site")return {...await generateSite(client,question,context,model.value()),module,generatedAt:new Date().toISOString()};
     const result = await client.models.generateContent({
       model: model.value(),
-      contents: JSON.stringify(module === "site" ? {module, question, context} : {module, question, excerpt, source}),
+      contents: JSON.stringify(module === "site"
+        ? {module, question, context}
+        : {module, question, ...(context ? {context, localSummary:excerpt, source} : {excerpt, source})}),
       config: {systemInstruction: common + "\n" + specialty, temperature: 0.2, maxOutputTokens: 1800, httpOptions: {timeout: 45000}}
     });
     const answer = result.text?.trim();
