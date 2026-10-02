@@ -2,7 +2,8 @@
 export async function analyze(module, question, local) {
   const q = question.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   if (module === 'site' && (local.blocked || !local.context)) return local;
-  if (module !== 'site' && !/analiz|analisis|interpret|recomend|aconsej|conclusion|tendencia|compar|riesgo|patron|por que/.test(q)) return local;
+  if (module === 'clima' && !local.context && !/analiz|analisis|interpret|recomend|aconsej|conclusion|tendencia|compar|riesgo|patron|por que/.test(q)) return local;
+  if (module === 'clima' && local.context && !/analiz|analisis|interpret|recomend|aconsej|conclusion|tendencia|compar|riesgo|patron|por que|acumul|histor|mensual|cierre|umbral|alerta|mayor|menor|cuanto|llovio|precipit/.test(q)) return local;
   if (module !== 'site' && /corresponde a|unicamente|no encontr|no hay descarrilos|no hay clientes|no puede|fuera del rango|indicame|alcance del/i.test(local.text)) return local;
   const user = window.firebase?.auth().currentUser;
   if (!user) return {...local, source: local.source + ' · IA requiere sesión aprobada'};
