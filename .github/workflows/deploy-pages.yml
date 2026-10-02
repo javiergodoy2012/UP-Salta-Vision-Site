@@ -33,6 +33,14 @@ jobs:
             mkdir -p "_site/$(dirname "$file")"
             cp "$file" "_site/$file"
           done < <(git ls-files -z)
+          rm -f \
+            _site/clima/acumulados/PRUEBA_FIRESTORE.md \
+            _site/clima/acumulados/README.md \
+            _site/clima/acumulados/backfill-precipitacion-historica.js \
+            _site/clima/acumulados/diagnostico-firestore.js \
+            _site/clima/acumulados/firestore-rule-snippet.rules \
+            _site/clima/acumulados/functions-precipitacion-automatizada.js \
+            _site/clima/acumulados/registrar-precipitacion-diaria.js
           curl --fail --location --silent --show-error \
             https://cdn.jsdelivr.net/npm/leaflet.gridlayer.googlemutant@0.16.0/dist/Leaflet.GoogleMutant.js \
             --output _site/Leaflet.GoogleMutant.js
