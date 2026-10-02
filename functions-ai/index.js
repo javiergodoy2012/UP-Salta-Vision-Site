@@ -47,14 +47,28 @@ function validateClimaContext(context) {
     'maximaLocalidad','maximoDiario','totalMm','max24Mm','diasLluvia','diasDisponibles','completo',
     'rankingLocalidades','totalesPorRamal','serieDiaria','total','localidades','promedioMm'
   ]);
-  function visit(value, depth=0) {
-    if(depth>9) return false;
-    if(value===null||typeof value==='number'||typeof value==='boolean')return true;
-    if(typeof value==='string')return value.length<=1000;
-    if(Array.isArray(value))return value.length<=100&&value.every(v=>visit(v,depth+1));
-    return value&&typeof value==='object'&&Object.entries(value).every(([k,v])=>allowed.has(k)&&visit(v,depth+1));
+  function visit(value, depth=0, path='context') {
+    if(depth>9) return {ok:false,reason:'depth',path};
+    if(value===null||typeof value==='number'||typeof value==='boolean')return {ok:true};
+    if(typeof value==='string')return value.length<=1000?{ok:true}:{ok:false,reason:'string-too-long',path};
+    if(Array.isArray(value)){
+      if(value.length>100)return {ok:false,reason:'array-too-long',path,length:value.length};
+      for(let i=0;i<value.length;i++){const r=visit(value[i],depth+1,path+'['+i+']');if(!r.ok)return r;}
+      return {ok:true};
+    }
+    if(value&&typeof value==='object'){
+      for(const [k,v] of Object.entries(value)){
+        if(!allowed.has(k))return {ok:false,reason:'key-not-allowed',path:path+'.'+k,key:k};
+        const r=visit(v,depth+1,path+'.'+k);if(!r.ok)return r;
+      }
+      return {ok:true};
+    }
+    return {ok:false,reason:'unsupported-type',path,type:typeof value};
   }
-  return context?.schema==='clima-v2'&&JSON.stringify(context).length<=50000&&visit(context);
+  if(context?.schema!=='clima-v2')return {ok:false,reason:'schema',path:'context.schema'};
+  const bytes=JSON.stringify(context).length;
+  if(bytes>50000)return {ok:false,reason:'too-large',path:'context',bytes};
+  return visit(context);
 }
 function weatherQuestion(question){
  const q=question.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
