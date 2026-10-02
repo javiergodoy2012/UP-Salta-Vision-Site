@@ -309,10 +309,16 @@ exports.razonarSiteVision = onCall({
       contents: JSON.stringify(module === "site"
         ? {module, question, context}
         : {module, question, ...(context ? {context, localSummary:excerpt, source} : {excerpt, source})}),
-      config: {systemInstruction: common + "\n" + specialty, temperature: 0.2, maxOutputTokens: 1800, httpOptions: {timeout: 45000}}
+      config: {
+        systemInstruction: common + "\n" + specialty,
+        temperature: 0.2,
+        maxOutputTokens: 1200,
+        thinkingConfig: {thinkingBudget: 0},
+        httpOptions: {timeout: 45000}
+      }
     });
-    const answer = result.text?.trim();
-    if (!answer) throw new Error("EMPTY_RESPONSE");
+    const answer = plainSite(result.text);
+    if (!answer || incomplete(result, answer)) throw new Error("INCOMPLETE_RESPONSE");
     logger.info("Razonamiento completado", {module, model: model.value(), usage: result.usageMetadata});
     return {answer, module, generatedAt: new Date().toISOString(), source: module === "clima" && context ? "Análisis IA · contexto Clima Alert v2 · " + source : "Análisis IA sobre extracto local · " + source};
   } catch (error) {
