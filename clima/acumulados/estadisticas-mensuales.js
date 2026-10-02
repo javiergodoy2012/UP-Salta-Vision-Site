@@ -37,7 +37,81 @@ function canonicalRamales(ramal){
   return [ramal];
 }
 
+
+async function loadPersistedMonthly(ym,force=false){
+  if(!global.firebase?.firestore) return null;
+  const ref=global.firebase.firestore().collection('estadisticasMensualesLluvia').doc(ym);
+  const snap=force
+    ? await ref.get({source:'server'})
+    : await ref.get();
+  if(!snap.exists) return null;
+
+  const d=snap.data()||{};
+  if(d.estado!=='cerrado' || !Array.isArray(d.rankingLocalidades) || !Array.isArray(d.totalesPorRamal)) return null;
+  if(!Array.isArray(d.serieDiaria) || !d.maximoDiario) return null;
+
+  const ranking=d.rankingLocalidades.map(x=>({
+    localidadId:x.localidadId,
+    localidad:x.localidad,
+    provincia:x.provincia,
+    ramal:x.ramal,
+    total:Number(x.totalMm||0),
+    max24:Number(x.max24Mm||0),
+    diasLluvia:Number(x.diasLluvia||0),
+    completo:Boolean(x.completo)
+  }));
+
+  const ramales=d.totalesPorRamal.map(x=>({
+    ramal:x.ramal,
+    total:Number(x.totalMm||0),
+    localidades:Number(x.localidades||0)
+  }));
+
+  const serie=d.serieDiaria.map(x=>({
+    fecha:x.fecha,
+    total:Number(x.totalMm||0),
+    localidades:Number(x.localidades||0),
+    promedio:Number(x.promedioMm||0)
+  }));
+
+  const maxLoc=d.maximaLocalidad ? {
+    localidadId:d.maximaLocalidad.localidadId,
+    localidad:d.maximaLocalidad.localidad,
+    provincia:d.maximaLocalidad.provincia,
+    ramal:d.maximaLocalidad.ramal,
+    total:Number(d.maximaLocalidad.totalMm||0),
+    max24:Number(d.maximaLocalidad.max24Mm||0),
+    diasLluvia:Number(d.maximaLocalidad.diasLluvia||0),
+    completo:Boolean(d.maximaLocalidad.completo)
+  } : ranking[0]||null;
+
+  return {
+    ym,
+    label:monthLabel(ym),
+    desde:d.desde,
+    hasta:d.hasta,
+    dias:Number(d.dias||daysInMonth(ym)),
+    rows:[],
+    localidades:ranking,
+    ranking,
+    ramales,
+    serie,
+    maxLoc,
+    maxDaily:d.maximoDiario,
+    promedio:Number(d.promedioLocalidadMm||0),
+    completas:Number(d.cobertura?.completas||0),
+    sourceMode:'snapshot'
+  };
+}
+
 async function build(ym,force=false){
+  try{
+    const persisted=await loadPersistedMonthly(ym,force);
+    if(persisted) return persisted;
+  }catch(error){
+    console.warn('Cierre mensual persistido no disponible; se reconstruye desde precipitacionesDiarias.',error);
+  }
+
   const range=rangeForMonth(ym);
   const rows=await global.ClimaRainHistory.cargarRango({desde:range.desde,hasta:range.hasta,force});
   const byLoc=new Map();
@@ -83,7 +157,7 @@ async function build(ym,force=false){
   const promedio=localidades.length?Math.round((localidades.reduce((a,b)=>a+b.total,0)/localidades.length)*10)/10:0;
   const completas=localidades.filter(x=>x.completo).length;
 
-  return {ym,label:monthLabel(ym),...range,rows,localidades,ranking,ramales,serie,maxLoc,maxDaily,promedio,completas};
+  return {ym,label:monthLabel(ym),...range,rows,localidades,ranking,ramales,serie,maxLoc,maxDaily,promedio,completas,sourceMode:'reconstruido'};
 }
 
 let current=null;
@@ -93,7 +167,7 @@ async function render(force=false){
   if(mode) mode.textContent='CARGANDO';
   try{
     current=await build(ym,force);
-    if(mode) mode.textContent='MES CERRADO · FIRESTORE';
+    if(mode) mode.textContent=current.sourceMode==='snapshot'?'CIERRE MENSUAL · FIRESTORE':'MES RECONSTRUIDO · FIRESTORE';
 
     q('rain-month-title').textContent='Cuadro mensual · '+current.label;
     const periodEl=q('rain-month-period');
