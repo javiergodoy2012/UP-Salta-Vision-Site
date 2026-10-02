@@ -37,7 +37,7 @@ function validateClimaContext(context) {
     'schema','scope','type','label','ramal','localidades','period','mode','date',
     'semantics','actual','pronostico','historico','bot','oficial','generatedAt',
     'thresholds','sectorId','localidad','provincia','hot','cold','rain','wind','enHot','enCold','enRain','enStorm',
-    'current','temperaturaC','precipitacionMm','vientoKmh','rafagaKmh','alertas',
+    'current','temperaturaC','precipitacionMm','vientoKmh','rafagaKmh','alertas','alerts',
     'forecast','fecha','minimaC','maximaC','probPrecipitacionPct','rafagaMaxKmh','forecastOmitted',
     'monitor','status','checkedSectors','schedule','lastRunAt','detail','state','severity','sectors',
     'maxRain24','maxRain48','maxGust','updatedAt',
@@ -252,7 +252,11 @@ exports.razonarSiteVision = onCall({
   region: "southamerica-east1", timeoutSeconds: 60, memory: "256MiB",
   minInstances: 0, maxInstances: 1, concurrency: 10,
   serviceAccount: "1087987428046-compute@developer.gserviceaccount.com",
-  cors: ["https://upsaltavision.com.ar", "https://www.upsaltavision.com.ar"]
+  cors: [
+    "https://upsaltavision.com.ar",
+    "https://www.upsaltavision.com.ar",
+    /^https:\/\/8080-.*\.cloudshell\.dev$/
+  ]
 }, async request => {
   if (!request.auth?.uid) throw new HttpsError("unauthenticated", "Iniciá sesión.");
   const user = await db.collection("usuarios").doc(request.auth.uid).get();
@@ -267,8 +271,18 @@ exports.razonarSiteVision = onCall({
     if(weatherQuestion(question))return {answer:"Esa información corresponde al módulo Clima Alert.",module,source:"Ámbitos separados por módulo"};
     if(!validateSiteContext(context))throw new HttpsError("invalid-argument", "Contexto operativo inválido o ajeno a Site Visión.");
   }
-  if(module === "clima" && context && !validateClimaContext(context))
-    throw new HttpsError("invalid-argument", "Contexto meteorológico inválido.");
+  if(module === "clima" && context) {
+    const climaValidation = validateClimaContext(context);
+    if(!climaValidation.ok) {
+      logger.warn("Contexto Clima rechazado", {
+        schema: context?.schema || null,
+        bytes: (() => { try { return JSON.stringify(context).length; } catch (_) { return -1; } })(),
+        topKeys: context && typeof context === "object" ? Object.keys(context) : [],
+        validation: climaValidation
+      });
+      throw new HttpsError("invalid-argument", "Contexto meteorológico inválido.");
+    }
+  }
   const now = Date.now(), day = new Date(now).toISOString().slice(0, 10);
   // Count attempted calls, including provider failures, to bound retries and costs.
   await db.runTransaction(async tx => {
@@ -285,7 +299,7 @@ exports.razonarSiteVision = onCall({
     tx.set(global, {day, count: total + 1});
   });
   const specialty = module === "clima"
-    ? "Ámbito exclusivo: meteorología de Clima Alert. Usá context cuando esté disponible y respondé solo con los datos incluidos. Podés relacionar condiciones actuales, pronóstico de 7 días, umbrales, alertas internas del Bot, históricos modelados, acumulados y cierres mensuales. Respetá estrictamente context.semantics: actual, pronóstico, histórico modelado y alerta interna no son equivalentes entre sí ni a una alerta oficial del SMN. No presentes histórico modelado como medición de pluviómetro. Si forecastOmitted es mayor que cero, no afirmes haber analizado todo el pronóstico. Si falta cobertura o período, indicá la limitación. No consultes datos ferroviarios administrativos. No trates la hora de consulta como hora de medición. Sin datos actuales no evalúes seguridad actual. Para decisiones operativas, recomendá verificar SMN y protocolos vigentes sin inventarlos."
+    ? "Ámbito exclusivo: meteorología de Clima Alert. Usá context cuando esté disponible y respondé solo con los datos incluidos. Podés relacionar condiciones actuales, pronóstico de 7 días, umbrales, alertas internas del Bot, históricos modelados, acumulados y cierres mensuales. Respetá estrictamente context.semantics: actual, pronóstico, histórico modelado y alerta interna no son equivalentes entre sí ni a una alerta oficial del SMN. No presentes histórico modelado como medición de pluviómetro. En acumulados históricos, fechaReferencia es el último día completo disponible: h24, h72, d7 y d31 son ventanas de días completos terminadas en esa fecha. No las describas como ventanas contadas desde la hora de consulta y no inventes una limitación por la hora actual. Si forecastOmitted es mayor que cero, no afirmes haber analizado todo el pronóstico. Si falta cobertura o período, indicá solo la limitación real. No consultes datos ferroviarios administrativos. No trates la hora de consulta como hora de medición. Sin datos actuales no evalúes seguridad actual. Para decisiones operativas, recomendá verificar SMN y protocolos vigentes sin inventarlos. Respondé en texto plano, sin Markdown, sin asteriscos, sin encabezados con formato. Para consultas factuales simples, respondé primero el dato y luego una aclaración breve solo si aporta valor."
     : "Ámbito exclusivo: análisis de datos ferroviarios de Site Visión. Interpretá estadísticas, patrones y calidad de datos con criterio de sistemas y operación ferroviaria. No respondas meteorología; remití a Clima Alert. Usá únicamente context. Relacioná las categorías solicitadas y resolvé referencias con ramal, PK, entities y previousIntent. Separá hechos registrados, cálculos e inferencias sin mostrar razonamiento interno. null y ausencia de registros no equivalen a cero. total cuenta registros, no personas. Si omitted es mayor que cero no calcules totales desde records. La configuración sin fecha no acredita vigencia actual. No priorices sectores sin criterios comparables; respondé que no tenés información suficiente. No atribuyas a todo el sistema una ausencia limitada a este contexto. No infieras causalidad de correlaciones ni tasas de accidentes sin exposición (trenes/km o tráfico).";
   try {
     const client = new GoogleGenAI({vertexai: true, project: process.env.GCLOUD_PROJECT || "up-salta-vision", location: "global"});
@@ -300,7 +314,7 @@ exports.razonarSiteVision = onCall({
     const answer = result.text?.trim();
     if (!answer) throw new Error("EMPTY_RESPONSE");
     logger.info("Razonamiento completado", {module, model: model.value(), usage: result.usageMetadata});
-    return {answer, module, generatedAt: new Date().toISOString(), source: "Análisis IA sobre extracto local · " + source};
+    return {answer, module, generatedAt: new Date().toISOString(), source: module === "clima" && context ? "Análisis IA · contexto Clima Alert v2 · " + source : "Análisis IA sobre extracto local · " + source};
   } catch (error) {
     logger.error("Razonamiento no disponible", {module, code: String(error.status || error.code || "provider-error")});
     throw new HttpsError("unavailable", "El análisis IA no está disponible; usá la respuesta local.");
