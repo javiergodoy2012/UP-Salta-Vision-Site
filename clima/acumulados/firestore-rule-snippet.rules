@@ -7,3 +7,9 @@ match /precipitacionesDiarias/{documento} {
   allow read: if isApproved();
   allow write: if false;
 }
+
+
+match /estadisticasMensualesLluvia/{periodo} {
+  allow read: if isApproved();
+  allow write: if false;
+}
