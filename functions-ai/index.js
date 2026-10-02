@@ -36,7 +36,7 @@ function validateClimaContext(context) {
   const allowed = new Set([
     'schema','scope','type','label','ramal','localidades','period','mode','date',
     'semantics','actual','pronostico','historico','bot','oficial','generatedAt',
-    'thresholds','sectorId','localidad','hot','cold','rain','wind','enHot','enCold','enRain','enStorm',
+    'thresholds','sectorId','localidad','provincia','hot','cold','rain','wind','enHot','enCold','enRain','enStorm',
     'current','temperaturaC','precipitacionMm','vientoKmh','rafagaKmh','alertas',
     'forecast','fecha','minimaC','maximaC','probPrecipitacionPct','rafagaMaxKmh','forecastOmitted',
     'monitor','status','checkedSectors','schedule','lastRunAt','detail','state','severity','sectors',
