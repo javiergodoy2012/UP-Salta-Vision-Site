@@ -29,7 +29,7 @@ export async function analyze(module, question, local) {
     if (!response.ok || payload.error || data?.module !== module || typeof data.answer !== 'string' || !data.answer.trim()) throw new Error('AI_UNAVAILABLE');
     if(module === 'site' && /[:;,\-–…]$/.test(data.answer.trim()))throw new Error('INCOMPLETE_RESPONSE');
     const answer = module === 'clima'
-      ? data.answer.replace(/\*\*/g, '').replace(/^\s*#{1,6}\s*/gm, '').trim()
+      ? data.answer.replace(/\*\*/g, '').replace(/^\s*#{1,6}\s*/gm, '').replace(/^\s*\*\s+/gm, '• ').trim()
       : data.answer;
     return {text: answer, source: data.source, actions: local.actions, ...(module === 'site'?{sources:data.sources||[],searchSuggestions:data.searchSuggestions||null}:{})};
   } catch (_) {
