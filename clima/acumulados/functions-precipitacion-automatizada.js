@@ -168,6 +168,7 @@ async function generarCierreMensual(ym){
     .filter(r=>r.tipo === "historico_modelado" && r.fuente === "open-meteo");
 
   const byLoc = new Map();
+  const byDate = new Map();
   for(const r of rows){
     const val = Number(r.precipitacionMm || 0);
     const x = byLoc.get(r.localidadId) || {
@@ -185,6 +186,11 @@ async function generarCierreMensual(ym){
     if(val > 0) x.diasLluvia++;
     x.fechas.add(r.fecha);
     byLoc.set(r.localidadId, x);
+
+    const day = byDate.get(r.fecha) || {fecha:r.fecha,total:0,localidades:0};
+    day.total += val;
+    day.localidades++;
+    byDate.set(r.fecha, day);
   }
 
   const localidades = [...byLoc.values()].map(x=>({
@@ -230,6 +236,26 @@ async function generarCierreMensual(ym){
     (localidades.reduce((a,b)=>a+b.totalMm,0) / localidades.length) * 10
   ) / 10;
 
+  const maximoDiario = rows.reduce((best,r)=>{
+    return Number(r.precipitacionMm || 0) > Number(best?.precipitacionMm || 0) ? {
+      fecha:r.fecha,
+      localidadId:r.localidadId,
+      localidad:r.localidad,
+      provincia:r.provincia,
+      ramal:r.ramal,
+      precipitacionMm:Math.round(Number(r.precipitacionMm || 0)*10)/10
+    } : best;
+  }, null);
+
+  const serieDiaria = [...byDate.values()]
+    .sort((a,b)=>a.fecha.localeCompare(b.fecha))
+    .map(d=>({
+      fecha:d.fecha,
+      totalMm:Math.round(d.total*10)/10,
+      localidades:d.localidades,
+      promedioMm:d.localidades ? Math.round((d.total/d.localidades)*10)/10 : 0
+    }));
+
   await db.collection(MONTHLY_COLLECTION).doc(ym).set({
     periodo:ym,
     desde,
@@ -241,6 +267,8 @@ async function generarCierreMensual(ym){
     cobertura:{ localidades:localidades.length, completas },
     promedioLocalidadMm,
     maximaLocalidad: ranking[0] || null,
+    maximoDiario,
+    serieDiaria,
     rankingLocalidades: ranking,
     totalesPorRamal: ramales,
     generadoAt: FieldValue.serverTimestamp()
