@@ -3250,6 +3250,15 @@ function askSuggestion(text){openClimaChat();if(!climaChatAuthorized)return;cons
 async function submitClimaChat(event){event.preventDefault();const input=document.getElementById('clima-chat-input');const question=input?.value.trim();if(!question||!climaChatAuthorized||input.disabled)return;input.value='';input.disabled=true;chatAddMessage('user',question);chatSetTyping(true);try{const local=await answerClimaQuestion(question);let result=local;try{const ai=await import('/assistant-reasoning.js');result=await ai.analyze('clima',question,local);}catch(_){result={...local,source:local.source+' · Respaldo local'};}chatSetTyping(false);chatAddMessage('bot',result.text,result.source);}catch(error){chatSetTyping(false);chatAddMessage('bot','No pude obtener esos datos en este momento. Probá nuevamente o indicá una localidad y una fecha más precisa.','Sin respuesta meteorológica disponible');}finally{input.disabled=false;}}
 function sectorAliases(sector){const aliases=[sector.name];if(sector.id==='s6')aliases.push('guemes','general guemes','gral guemes');if(sector.id==='s11')aliases.push('san antonio','san antonio de los cobres');if(sector.id==='s20')aliases.push('maury','ingeniero maury','ing maury');if(sector.id==='s23')aliases.push('savio','general savio','gral savio');if(sector.id==='s25')aliases.push('pizarro','general pizarro','gral pizarro');return aliases.map(chatNormalize);}
 function findChatScope(question){const q=chatNormalize(question);const sector=SECTORS.find(item=>sectorAliases(item).some(alias=>q.includes(alias)));if(sector)return {type:'sector',label:sector.name,sectors:[sector]};const match=q.match(/(?:\bramal\s*)?\b(c(?:13|14|15|18|12)?)\b/i);if(match){const ramal=match[1].toUpperCase();const sectors=SECTORS.filter(item=>String(SECTOR_INFO[item.id]?.ramal||'').toUpperCase().split('/').map(v=>v.trim()).includes(ramal));if(sectors.length)return {type:'ramal',label:`Ramal ${ramal}`,ramal,sectors};}return {type:'all',label:'UP Salta',sectors:SECTORS};}
+function findClimaContextScope(question,baseScope){
+  const ramales=climaRamalList(question);
+  if(!/compar/.test(chatNormalize(question))||ramales.length<2)return baseScope;
+  const sectors=SECTORS.filter(item=>{
+    const rs=String(SECTOR_INFO[item.id]?.ramal||'').toUpperCase().split('/').map(v=>v.trim());
+    return ramales.some(r=>rs.includes(r));
+  });
+  return sectors.length?{type:'multi-ramal',label:'Ramales '+ramales.join(' y '),ramal:null,sectors}:baseScope;
+}
 function localISODate(offsetDays=0){const base=new Date(Date.now()+offsetDays*86400000);return new Intl.DateTimeFormat('en-CA',{timeZone:ARGENTINA_TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(base);}
 function parseChatDate(question){const q=chatNormalize(question);const today=localISODate();if(q.includes('pasado manana'))return {mode:'future',date:localISODate(2),label:'pasado mañana'};if(q.includes('manana'))return {mode:'future',date:localISODate(1),label:'mañana'};if(q.includes('ayer'))return {mode:'past',date:localISODate(-1),label:'ayer'};const relative=q.match(/hace\s+(\d{1,3})\s+dias?/);if(relative){const days=Math.min(3650,Number(relative[1]));return {mode:'past',date:localISODate(-days),label:`hace ${days} días`};}const slash=q.match(/\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b/);if(slash){const year=slash[3]?(slash[3].length===2?'20'+slash[3]:slash[3]):today.slice(0,4);const date=`${year}-${String(slash[2]).padStart(2,'0')}-${String(slash[1]).padStart(2,'0')}`;return {mode:date<today?'past':date===today?'current':'future',date,label:`el ${slash[1]}/${slash[2]}/${year}`};}const iso=q.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);if(iso){const date=iso[0];return {mode:date<today?'past':date===today?'current':'future',date,label:`el ${iso[3]}/${iso[2]}/${iso[1]}`};}if(q.includes('proxim')||q.includes('futur')||q.includes('pronost')||q.includes('semana'))return {mode:'future',date:null,label:'los próximos 7 días'};return {mode:'current',date:today,label:'ahora'};}
 function weatherLine(sector,data){const alerts=getAlerts(data,sector.id);return `${sector.name}: ${Number(data.temperature_2m).toFixed(1)} °C, lluvia ${Number(data.precipitation).toFixed(1)} mm, viento ${Number(data.wind_speed_10m).toFixed(0)} km/h, ráfagas ${Number(data.wind_gusts_10m).toFixed(0)} km/h${alerts.length?' · ALERTA: '+alerts.map(a=>a.label).join(', '):' · sin umbrales superados'}`;}
@@ -3380,7 +3389,7 @@ async function answerAccumulation(scope,question){
   const rows=(summary.localidades||[]).filter(x=>scope.type==='all'||ids.has(x.localidadId)||names.has(chatNormalize(x.localidad||'')));
   if(!rows.length)return null;
   const key=/31\s*dias?|ultimo mes/.test(q)?'d31':/72\s*h|72\s*horas?/.test(q)?'h72':/7\s*dias?|semana/.test(q)?'d7':'h24';
-  const label={h24:'último día completo',h72:'últimas 72 h',d7:'últimos 7 días',d31:'últimos 31 días'}[key];
+  const label={h24:'último día completo',h72:'últimas 72 h completas',d7:'últimos 7 días completos',d31:'últimos 31 días completos'}[key];
   if(scope.type==='sector'){
     const r=rows[0];
     return {text:`${scope.label}: acumulado de ${Number(r[key]||0).toFixed(1)} mm en ${label}.`,source:`Firestore · histórico modelado Open-Meteo · referencia ${summary.referencia}`};
@@ -3517,7 +3526,8 @@ async function answerClimaQuestion(question){
   if(!result&&period.mode==='past')result=await answerPast(scope,period);
   else if(!result&&period.mode==='future')result=await answerFuture(scope,period);
   else if(!result)result=await answerCurrent(scope);
-  result.context=await buildClimaContext(question,scope,period);
+  const contextScope=findClimaContextScope(question,scope);
+  result.context=await buildClimaContext(question,contextScope,period);
   return result;
 }
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.getElementById('clima-chat-panel')?.classList.contains('open'))closeClimaChat();});
