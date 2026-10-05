@@ -1,0 +1,58 @@
+/* Applied only to same-origin original documents; no operational classes are redefined. */
+html[data-sv-module]{font-family:var(--sv-font);color-scheme:dark;--bg:var(--sv-bg);--bg2:var(--sv-surface);--surface:var(--sv-surface);--surface2:var(--sv-surface2);--border:var(--sv-line);--border2:var(--sv-line);--ink:var(--sv-text);--ink2:var(--sv-muted);--ink3:var(--sv-subtle)}
+html[data-sv-module][data-theme="light"]{color-scheme:light}
+html[data-sv-module] body{font-family:var(--sv-font)!important;background:var(--sv-bg)!important;color:var(--sv-text);margin:0!important;height:auto!important;overflow-x:hidden}
+html[data-sv-module] body::before,html[data-sv-module] body::after{display:none!important}
+html[data-sv-module] button,html[data-sv-module] input,html[data-sv-module] select,html[data-sv-module] textarea{font-family:var(--sv-font)!important}
+html[data-sv-module] :focus-visible{outline:2px solid var(--sv-accent);outline-offset:3px}
+/* Guard every root layout override: the original access gate remains authoritative. */
+html[data-sv-module="red"] body:not(.firebase-locked) #dashboardApp{position:static!important;width:100%!important;height:auto!important;min-height:0!important;max-width:none!important;transform:none!important;left:auto!important;top:auto!important;display:block!important;background:var(--sv-bg)!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+html[data-sv-module="red"] #dashboardApp>.topbar,html[data-sv-module="red"] #dashboardApp>.rail-stripe{display:none!important}
+html[data-sv-module="red"] .main{display:grid!important;grid-template-columns:275px minmax(0,1fr)!important;grid-template-rows:auto!important;gap:14px!important;padding:14px!important;overflow:visible!important;min-height:0!important}
+html[data-sv-module="red"] .main>.sidebar{position:static!important;display:block!important;grid-column:1!important;grid-row:1!important;width:auto!important;max-height:none!important;overflow:visible!important;background:var(--sv-surface)!important;border:1px solid var(--sv-line)!important;border-radius:var(--sv-radius)!important;padding:15px!important;box-shadow:none!important}
+html[data-sv-module="red"] .main>.content{display:flex!important;flex-direction:column;grid-column:2!important;grid-row:1!important;min-width:0!important;overflow:visible!important;gap:12px!important}
+html[data-sv-module="red"] .sidebar .tabs{display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px!important}
+html[data-sv-module="red"] .sidebar .tab{min-height:40px!important;padding:9px 7px!important;font:500 10px/1.4 var(--sv-font)!important;letter-spacing:0!important;background:var(--sv-surface2)!important;color:var(--sv-muted)!important;border:1px solid var(--sv-line)!important;border-radius:7px!important;box-shadow:none!important;text-transform:none!important}
+html[data-sv-module="red"] .sidebar .tab.active{background:var(--sv-accent-dim)!important;color:var(--sv-accent)!important;border-color:var(--sv-accent)!important}
+html[data-sv-module="red"] .sidebar h2,html[data-sv-module="red"] .field-label{font-family:var(--sv-font)!important;font-size:10px!important;letter-spacing:.6px!important;color:var(--sv-muted)!important}
+html[data-sv-module="red"] .sidebar-layer{background:var(--sv-surface2)!important;border-color:var(--sv-line)!important;color:var(--sv-text)!important;border-radius:8px!important}
+html[data-sv-module="red"] .sidebar input:not([type="checkbox"]),html[data-sv-module="red"] .sidebar select{min-height:40px!important;background:var(--sv-bg)!important;color:var(--sv-text)!important;border:1px solid var(--sv-line)!important;border-radius:6px!important;font-size:13px!important;max-width:100%!important}
+html[data-sv-module="red"] .primary,html[data-sv-module="red"] .secondary{border-radius:7px!important;font:500 11px/1.5 var(--sv-font)!important;min-height:38px!important;box-shadow:none!important}
+html[data-sv-module="red"] .primary{color:var(--sv-accent)!important;background:var(--sv-accent-dim)!important;border:1px solid var(--sv-accent)!important}
+html[data-sv-module="red"] .secondary{color:var(--sv-text)!important;background:var(--sv-surface2)!important;border:1px solid var(--sv-line)!important}
+html[data-sv-module="red"] .metrics{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;background:var(--sv-surface)!important;border:1px solid var(--sv-line)!important;border-radius:9px!important;padding:0!important}
+html[data-sv-module="red"] .metric{min-width:0!important;background:none!important;padding:12px 8px!important}
+html[data-sv-module="red"] .metric strong{font:500 17px/1.4 var(--sv-font)!important;color:var(--sv-text)!important;overflow-wrap:anywhere}
+html[data-sv-module="red"] .metric small{color:var(--sv-subtle)!important;font:400 9px/1.4 var(--sv-font)!important}
+html[data-sv-module="red"] .map-card{background:var(--sv-surface)!important;border:1px solid var(--sv-line)!important;border-radius:9px!important;overflow:hidden!important;min-height:0!important;height:auto!important}
+html[data-sv-module="red"] #map{height:560px!important;min-height:360px!important;width:100%!important}
+html[data-sv-module="red"] .legend-row{padding:6px 12px!important;font:400 10px/1.5 var(--sv-font)!important;color:var(--sv-muted)!important}
+html[data-sv-module="red"] .result,html[data-sv-module="red"] .data-box,html[data-sv-module="red"] .coord-full{background:var(--sv-surface2)!important;border-color:var(--sv-line)!important;overflow-wrap:anywhere}
+html[data-sv-module="red"] .access-card{font-family:var(--sv-font);background:var(--sv-surface);border-color:var(--sv-line);color:var(--sv-text)}
+html[data-sv-module="red"] #firebaseAccessGate{background:var(--sv-bg)}
+html[data-sv-module="red"] .access-mark{background:var(--sv-accent-dim);color:var(--sv-accent)}
+/* Keep the original assistant context and handlers; only its presentation changes. */
+html[data-sv-module="red"] #sv-assistant-launcher{display:none!important}
+html[data-sv-module="red"] .sv-assistant-panel{font-family:var(--sv-font);background:var(--sv-surface);color:var(--sv-text);border-color:var(--sv-line);border-radius:10px}
+html[data-sv-module="red"] .sv-assistant-header,html[data-sv-module="red"] .sv-assistant-form{background:var(--sv-surface);border-color:var(--sv-line)}
+html[data-sv-module="red"] .sv-assistant-bubble{background:var(--sv-surface2);color:var(--sv-text)}
+html[data-sv-module="red"] .sv-assistant-input{background:var(--sv-bg);color:var(--sv-text);border-color:var(--sv-line)}
+html[data-sv-module="red"] .sv-assistant-suggestion{background:var(--sv-surface2);color:var(--sv-muted);border-color:var(--sv-line)}
+html[data-sv-view="asistente"] body:not(.firebase-locked) #dashboardApp{display:none!important}
+html[data-sv-view="asistente"] body:not(.firebase-locked) .sv-assistant-panel.open{position:relative!important;inset:auto!important;width:calc(100% - 30px)!important;max-width:960px;height:calc(100vh - 30px)!important;min-height:430px;margin:15px auto!important;transform:none!important}
+/* Clima: only neutral containers, navigation and fonts; no alert/forecast selectors. */
+html[data-sv-module="clima"] .app{width:100%!important;max-width:none!important;margin:0!important;padding:0 16px 28px!important}
+html[data-sv-module="clima"] .app>header>.logo{display:none!important}
+html[data-sv-module="clima"] .app>header{min-height:0!important;padding:13px 0!important;border-color:var(--sv-line);gap:8px}
+html[data-sv-module="clima"] .header-right{width:100%;align-items:flex-start!important}
+html[data-sv-module="clima"] .header-right>div{flex-wrap:wrap;gap:8px!important}
+html[data-sv-module="clima"] .header-right #theme-toggle{display:none!important}
+html[data-sv-module="clima"] .app>.tabs{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;padding:7px 0 12px!important;gap:6px!important;scrollbar-width:thin}
+html[data-sv-module="clima"] .app>.tabs>.tab{flex:0 0 auto!important;min-height:38px;padding:8px 12px!important;font:500 11px/1.4 var(--sv-font)!important;background:var(--sv-surface)!important;border:1px solid var(--sv-line)!important;color:var(--sv-muted)!important;border-radius:7px!important}
+html[data-sv-module="clima"] .app>.tabs>.tab.active{background:var(--sv-accent-dim)!important;color:var(--sv-accent)!important;border-color:var(--sv-accent)!important}
+html[data-sv-module="clima"] .header-right .btn{font:500 11px/1.5 var(--sv-font)!important;border-radius:7px!important;min-height:36px}
+html[data-sv-module="clima"] .sectors-grid{gap:var(--sv-gap)!important}
+html[data-sv-module="clima"] .sector-card{border-radius:var(--sv-radius)!important}
+html[data-sv-module="clima"] .table-container,html[data-sv-module="clima"] .report-table-wrap{overflow:auto!important;max-width:100%}
+@media(max-width:900px){html[data-sv-module="red"] .main{grid-template-columns:235px minmax(0,1fr)!important}html[data-sv-module="red"] .metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}html[data-sv-module="red"] #map{height:520px!important}}
+@media(max-width:650px){html[data-sv-module="red"] .main{display:flex!important;flex-direction:column!important;padding:10px!important;gap:12px!important}html[data-sv-module="red"] .main>.content{order:0}html[data-sv-module="red"] .main>.sidebar{order:1}html[data-sv-module="red"] #map{height:380px!important;min-height:300px!important}html[data-sv-module="red"] .sidebar .tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important}html[data-sv-module="red"] .sidebar input:not([type="checkbox"]),html[data-sv-module="red"] .sidebar select{font-size:16px!important;min-height:44px!important}html[data-sv-module="clima"] .app{padding:0 10px 24px!important}html[data-sv-module="clima"] .sectors-grid{grid-template-columns:1fr!important}html[data-sv-module="clima"] .header-right .btn{min-height:40px;font-size:10px!important}html[data-sv-view="asistente"] body:not(.firebase-locked) .sv-assistant-panel.open{width:calc(100% - 16px)!important;margin:8px!important;height:calc(100vh - 16px)!important;min-height:420px}}

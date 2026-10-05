@@ -1,0 +1,14 @@
+{
+  "name": "site-vision-dashboard-preview",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DOM checks for the isolated Site Visión preview; no production runtime dependencies",
+  "scripts": {
+    "test": "node verify.cjs && node verify-integrated.cjs && node verify-original-modules.cjs",
+    "test:original": "node verify-original-modules.cjs"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0",
+    "leaflet": "1.9.4"
+  }
+}

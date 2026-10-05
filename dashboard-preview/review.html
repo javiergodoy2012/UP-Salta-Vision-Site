@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Evaluar Dashboard · Site Visión</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#e9edf2;color:#253548;font-family:system-ui,sans-serif}
+    header{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px 22px;background:#fff;border-bottom:1px solid #d5dde6}
+    h1{margin:0;font-size:15px;font-weight:600}p{margin:5px 0 0;font-size:12px;color:#66788c}
+    nav{display:flex;gap:8px;flex-wrap:wrap}button,a{font:inherit;font-size:12px;border:1px solid #c8d5e2;border-radius:7px;background:#fff;color:#355575;padding:9px 13px;text-decoration:none;cursor:pointer}
+    button[aria-pressed=true]{background:#17334f;color:#fff;border-color:#17334f}
+    button:focus-visible,a:focus-visible{outline:3px solid #428ce0;outline-offset:2px}
+    main{padding:24px 16px;overflow:hidden}#stage{margin:auto;position:relative}iframe{border:0;background:#0b1018;transform-origin:top left;display:block;box-shadow:0 14px 45px #14334d30;border-radius:10px}
+    .hint{text-align:center;font-size:11px;margin:17px 0;color:#5f7388}#viewport-size{font-variant-numeric:tabular-nums}
+    @media(max-width:620px){header{padding:13px 15px}nav{gap:6px}button,a{padding:9px 10px;font-size:11px}main{padding:16px 10px}}
+  </style>
+</head>
+<body>
+  <header><div><h1>Site Visión · Evaluación del Dashboard</h1><p>Shell integrado · Módulos originales · Sin publicación</p></div><nav aria-label="Tamaño de pantalla"><button data-width="1366" data-height="900" aria-pressed="true">PC</button><button data-width="1280" data-height="720" aria-pressed="false">Notebook</button><button data-width="820" data-height="1000" aria-pressed="false">Tablet</button><button data-width="1180" data-height="820" aria-pressed="false">Tablet horizontal</button><button data-width="390" data-height="844" aria-pressed="false">Móvil</button><button data-width="360" data-height="800" aria-pressed="false">Móvil compacto</button><button data-width="844" data-height="390" aria-pressed="false">Móvil horizontal</button><a href="site-vision-dashboard.html" target="_blank" rel="noopener">Abrir sin marco ↗</a></nav></header>
+  <main><div id="stage"><iframe id="preview" src="site-vision-dashboard.html" title="Dashboard de Site Visión"></iframe></div><p class="hint"><span id="viewport-size">1366 × 900</span> px · El contenido se adapta al ancho elegido. Podés navegar y desplazarte dentro de la preview. Para los módulos completos, usá el servidor local incluido.</p></main>
+  <script>
+    const frame=document.getElementById('preview'),stage=document.getElementById('stage');let width=1366,height=900;
+    function fit(){const scale=Math.min(1,(document.documentElement.clientWidth-32)/width);frame.style.width=width+'px';frame.style.height=height+'px';frame.style.transform='scale('+scale+')';stage.style.width=width*scale+'px';stage.style.height=height*scale+'px';document.getElementById('viewport-size').textContent=width+' × '+height;}
+    document.querySelectorAll('[data-width]').forEach(button=>button.addEventListener('click',()=>{width=Number(button.dataset.width);height=Number(button.dataset.height);document.querySelectorAll('[data-width]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));fit();}));window.addEventListener('resize',fit);fit();
+  </script>
+</body>
+</html>

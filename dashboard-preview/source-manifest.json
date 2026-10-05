@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "0fabcea5c39cada936d40a4a1a6d443c7025e0e2",
+  "sourceDate": "2026-09-10",
+  "sourceHashes": {
+    "index.html": "1d269406fd1a5fdbd0246b90e1303497bf1c7f9229f6f47446bca18f27364fec",
+    "cruces-habilitados-data.js": "1099a072c7c816ff3dd12dde065486d5f317b672353c25b01a0c51dafaa38b7e",
+    "interferencias-data.js": "24e09e6fed8e473e453b1128e6df374300e7155b02238f1508c30cb838ecd984",
+    "site-vision-logo-v2-512.png": "4938d1815953512bb2f3f0e8068b334894a40ced2cd5925eff9e6980725bcc4c",
+    "clima/index.html": "ea20353e40a1090778d8e471c522faf40c02c901b9827fe54f721aee6b4468b1",
+    "site-assistant.js": "82ac9833589beaffb20063790d8d53ec33b79b51022ff46330514ba6c3b9ade6",
+    "site-assistant.css": "2045c0d1a018dcf90ab93fef4a8ba2dd7dcd5809af392379a11bfdd73ecbc28d",
+    "assistant-reasoning.js": "36f8a46cd93ecfc27d5b9915d8a274dd2d8634a5b57d6d374a221c6297f9b535",
+    "cruces-habilitados.js": "d3a8d378ff3d8d4c9872dd8423c25cdf9dd6f0fe2c1902139867b1a38e76cd6c",
+    "interferencias.js": "4504d184f6836c8c2be0fac15b44900225959f4d039fcbfe8174997f6fce8fd6",
+    "clima/firebase-messaging-sw.js": "57eeac003f0e42949c867b5b8a1e439c49e5a321182c5c1ebd4223971428909d",
+    "site-vision-sw.js": "8ea3bb1376fc64a53b2bc4972596c77699f9b2b056ce44236b5f8e7a67e143a4",
+    "google-maps-config.js": "d0bc9c29beb29be1a8892c7483576411dcf3e06377e789c6c8ed96469d77adde",
+    "clima/acumulados/acumulados-ui.css": "972176a14d1df3ba4a24e076664a050938cece9485c3cdc807f06a1434ab3168",
+    "clima/acumulados/precipitacion-historica.js": "2c7abd8f6a419af8c1e7ed939adc9b1028a4f21de1dc54729eda40e7e2e07a68",
+    "clima/acumulados/acumulados-ui.js": "c03557fb1518056c3a43874ea01e1e5bf5d8ace47ab1967ce3616febc99730ce",
+    "clima/acumulados/estadisticas-mensuales.js": "17f31ba3e37a4b872169460499896679ccd568ea70e6057607a973804ec84a75"
+  }
+}
