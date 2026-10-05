@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Site Visión · Dashboard</title>
+  <style id="site-fonts">__FONT_CSS__</style>
+  <style id="site-shared-theme">__SHARED_THEME__</style>
+  <style>__STYLE__</style>
+  <script id="site-module-skin" type="text/plain">__MODULE_SKIN__</script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Ir al contenido</a>
+  <div id="app" data-theme="dark">
+    <header class="topbar">
+      <button class="brand" data-page="inicio" aria-label="Site Visión, inicio">
+        <img src="__LOGO__" alt="Logo actual de Site Visión">
+        <span><b>SITE VISIÓN</b><small>U P &nbsp; S A L T A</small></span>
+      </button>
+      <div class="ticker" id="ticker" aria-label="Resumen de la base local"><span><b>C</b> 46 cruces</span><span><b>C13</b> 48 cruces</span><span><b>C14</b> 56 cruces</span><span><b>C15</b> 90 cruces</span><span><b>C16</b> 6 cruces</span><span><b>C18</b> 23 cruces</span></div>
+      <div class="top-actions">
+        <button class="global-search" id="open-search"><i data-lucide="search"></i><span>Buscar ramal, cruce…</span><kbd>Ctrl K</kbd></button>
+        <span class="preview-badge"><span></span> VISTA PREVIA</span>
+        <button class="icon-button" id="theme-toggle" aria-label="Cambiar a modo claro"><i data-lucide="moon"></i></button>
+        <button class="avatar" id="profile-button" aria-label="Información de la vista">SV</button>
+      </div>
+    </header>
+    <div class="app-layout">
+      <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+        <div class="nav-group-label">GENERAL</div>
+        <button class="nav-item active" data-page="inicio"><i data-lucide="house"></i><span>Inicio</span></button>
+        <button class="nav-item" data-page="localizador"><i data-lucide="map-pinned"></i><span>Explorar la red</span></button>
+        <div class="nav-group-label">OPERACIÓN</div>
+        <button class="nav-item" data-page="cruces"><i data-lucide="railroad"></i><span>Cruces habilitados</span><small>269</small></button>
+        <button class="nav-item" data-page="servicios"><i data-lucide="cable"></i><span>Interferencias</span><small>90</small></button>
+        <button class="nav-item" data-page="infraestructura"><i data-lucide="construction"></i><span>Infraestructura</span></button>
+        <div class="nav-group-label">MONITOREO</div>
+        <button class="nav-item" data-page="clima"><i data-lucide="cloud-sun"></i><span>Clima Alert</span></button>
+        <button class="nav-item" data-page="alertas"><i data-lucide="bell"></i><span>Alertas</span></button>
+        <button class="nav-item" data-page="asistente"><i data-lucide="messages-square"></i><span>Asistente Site</span></button>
+        <div class="sidebar-bottom"><div class="workspace-label"><span class="workspace-mark"><i data-lucide="train-front"></i></span><span>Unidad de Producción<small>Salta · Red Belgrano</small></span></div><button class="nav-item" id="about-button"><i data-lucide="info"></i><span>Acerca de esta vista</span></button></div>
+      </aside>
+      <main id="content" tabindex="-1"></main>
+      <section id="module-host" class="module-host" aria-label="Módulo integrado" hidden>
+        <div class="module-feedback-bar"><div><strong id="module-feedback" role="status" aria-live="polite"></strong><p id="module-description"></p></div><button class="btn" id="module-retry" hidden>Recargar módulo</button></div>
+        <div id="module-fallback" class="module-fallback" hidden><i data-lucide="monitor-smartphone"></i><h2>Todo dentro de Site Visión</h2><p>El archivo suelto permite recorrer el Dashboard y sus datos. El paquete completo incorpora los documentos actuales de Explorar la red, Clima Alert y el asistente.</p><p>Descomprimí todo el paquete. En Windows, abrí <code>dashboard-preview/INICIAR-PREVIEW.bat</code>; no requiere Python. Conservá abierta la ventana mientras usás la preview.</p><div class="module-fallback-actions"><button class="btn" data-action="reference-view">Ver la red de referencia</button><button class="btn" data-page="inicio">Volver al inicio</button></div></div>
+        <div id="module-ports"></div>
+      </section><button class="sidebar-scrim" id="sidebar-scrim" aria-label="Cerrar menú" tabindex="-1" hidden></button>
+    </div>
+    <footer class="statusbar"><span><span class="status-dot"></span> DATOS LOCALES <span class="footer-divider">/</span> Shell en evaluación</span><span>269 cruces <span>·</span> 90 interferencias <span>·</span> Preview local</span></footer>
+    <nav class="mobile-nav" aria-label="Navegación móvil"><button data-page="inicio" class="active"><i data-lucide="house"></i>Inicio</button><button data-page="localizador"><i data-lucide="map-pinned"></i>Red</button><button data-page="cruces"><i data-lucide="railroad"></i>Cruces</button><button data-page="clima"><i data-lucide="cloud-sun"></i>Clima</button><button id="mobile-more" aria-controls="sidebar" aria-expanded="false"><i data-lucide="menu"></i>Más</button></nav>
+    <button class="assistant-fab" id="assistant-button" aria-label="Acceso al asistente Site"><i data-lucide="sparkles"></i></button>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <dialog id="search-dialog" class="search-dialog" aria-label="Buscar en Site Visión"><form method="dialog" class="search-dialog-head"><i data-lucide="search"></i><input id="command-input" placeholder="Buscar módulo, ramal o cruce…" aria-label="Buscar en Site Visión" autocomplete="off"><button class="icon-button" aria-label="Cerrar buscador"><i data-lucide="x"></i></button></form><div id="command-results"></div><div class="dialog-hint">Navegá por los módulos y la base local <kbd>ESC</kbd></div></dialog>
+    <dialog id="detail-dialog" class="detail-dialog"><div id="detail-content"></div></dialog>
+  </div>
+  <noscript>Esta vista requiere JavaScript para navegar los datos locales.</noscript>
+  <script id="site-data" type="application/json">__DATA__</script>
+  <script>__LUCIDE__</script>
+  <script>__MODULE_HOST__</script>
+  <script>__APP__</script>
+</body>
+</html>

@@ -63,6 +63,7 @@ jobs:
           python scripts/apply_dashboard_brand.py _site/index.html
           python scripts/inject_network_overview.py _site/index.html
           python scripts/prioritize_access_startup.py _site/index.html
+          python dashboard-preview/prepare_publication.py _site
 
       - name: Configure Pages
         uses: actions/configure-pages@v6
